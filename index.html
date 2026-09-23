@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediVault | Private Medicine Tracker</title>
+  <style>
+    :root { 
+      --primary: #2563eb; 
+      --primary-hover: #1d4ed8;
+      --success: #10b981; 
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #f8fafc; 
+      --surface: #ffffff; 
+      --gray-bg: #f1f5f9; 
+      --text: #0f172a; 
+      --text-muted: #64748b; 
+      --border: #e2e8f0; 
+      --shadow: rgba(0, 0, 0, 0.05);
+    }
+
+    [data-theme="dark"] {
+      --primary: #3b82f6; 
+      --primary-hover: #60a5fa; 
+      --success: #10b981; 
+      --bg: #0f172a; 
+      --surface: #1e293b; 
+      --gray-bg: #0f172a; 
+      --text: #f8fafc; 
+      --text-muted: #94a3b8; 
+      --border: #334155; 
+      --shadow: rgba(0, 0, 0, 0.25);
+    }
+
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 0; color: var(--text); background: var(--bg); line-height: 1.5; display: flex; flex-direction: column; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+    main { flex: 1; }
+    
+    /* Header */
+    .header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 1rem; box-shadow: 0 1px 3px var(--shadow);}
+    .logo { font-size: 1.5rem; font-weight: 700; color: var(--text); text-decoration: none; }
+    .logo span { color: var(--primary); }
+    
+    .header-center { flex: 1; display: flex; justify-content: center; }
+    .profile-tabs { display: flex; gap: 8px; background: var(--gray-bg); padding: 4px; border-radius: 8px; overflow-x: auto; max-width: 100%; border: 1px solid var(--border); align-items: center;}
+    .tab { padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; border: none; background: transparent; color: var(--text-muted); font-size: 0.9rem; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;}
+    .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .tab:hover:not(.active) { color: var(--text); }
+    
+    .profile-action-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0 2px; font-size: 0.85rem; transition: 0.2s;}
+    .profile-action-btn:hover { color: var(--primary); }
+    .profile-action-btn.delete:hover { color: var(--danger); }
+    .add-profile-btn { padding: 6px 12px; font-size: 0.85rem; font-weight: 600; background: transparent; border: 1px dashed var(--border); border-radius: 6px; color: var(--text-muted); cursor: pointer; white-space: nowrap;}
+    .add-profile-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .theme-toggle { background: var(--gray-bg); border: 1px solid var(--border); color: var(--text); padding: 0.5rem; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; transition: 0.2s; }
+    .theme-toggle:hover { background: var(--border); }
+
+    /* Layout Containers */
+    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+    
+    /* Buttons */
+    .btn { padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; font-size: 0.95rem; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-family: inherit; justify-content: center;}
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-outline { background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: var(--gray-bg); }
+
+    /* Toolbars & Panels */
+    .toolbar { display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; background: var(--surface); padding: 1rem; border-radius: 12px; box-shadow: 0 2px 4px var(--shadow); border: 1px solid var(--border); }
+    .search-sort-group { display: flex; gap: 1rem; flex: 1; min-width: 250px; flex-wrap: wrap;}
+    .search-bar { flex: 2; min-width: 150px; padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.95rem; background: var(--surface); color: var(--text);}
+    .sort-dropdown { flex: 1; min-width: 150px; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.95rem; background: var(--surface); color: var(--text); cursor: pointer; }
+    .action-group { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;}
+
+    /* Routine Quick Log Bar */
+    .routine-bar { display: flex; gap: 1rem; padding: 1rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap;}
+    .routine-bar span { font-weight: 600; color: var(--text-muted); margin-right: auto;}
+    
+    /* Recent Logs Panel */
+    .logs-panel { margin-top: 2rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 1.5rem; display: none; box-shadow: 0 2px 8px var(--shadow);}
+    .logs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-weight: 700; color: var(--text); font-size: 1.1rem;}
+    .log-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: var(--gray-bg); border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.9rem; border: 1px solid var(--border); }
+    .log-undo-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;}
+    .log-undo-btn:hover { background: var(--surface); color: var(--primary); border-color: var(--primary); }
+
+    /* Vault Grid */
+    .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+    
+    .med-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px var(--shadow); display: flex; flex-direction: column; transition: transform 0.2s; position: relative;}
+    .med-card:hover { transform: translateY(-2px); border-color: var(--primary); }
+    .med-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; gap: 8px; flex-wrap: wrap;}
+    .med-name { margin: 0; font-size: 1.25rem; font-weight: 700; width: 100%;}
+    
+    .timing-badge { font-size: 0.8rem; background: rgba(37, 99, 235, 0.1); padding: 4px 8px; border-radius: 6px; color: var(--primary); font-weight: 600; border: 1px solid rgba(37, 99, 235, 0.2);}
+    .timing-badge.sos { background: rgba(245, 158, 11, 0.1); color: var(--warning); border-color: rgba(245, 158, 11, 0.2); }
+    .food-badge { font-size: 0.8rem; background: var(--gray-bg); padding: 4px 8px; border-radius: 6px; color: var(--text-muted); font-weight: 600; }
+    
+    /* Progress Battery */
+    .status-container { margin: 1rem 0; text-align: center; }
+    .days-left { font-size: 2rem; font-weight: 800; color: var(--success); line-height: 1; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 0.5rem;}
+    .run-out-date { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; font-weight: 500;}
+    
+    .progress-bar { width: 100%; height: 8px; background: var(--gray-bg); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; transition: width 0.3s, background-color 0.3s; }
+    
+    .warning .days-left { color: var(--warning); }
+    .danger .days-left { color: var(--danger); }
+    .sos-mode .days-left { color: var(--primary); }
+    .archived-status { opacity: 0.6; filter: grayscale(1); }
+
+    .batch-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; padding: 8px 0; border-top: 1px solid var(--border); color: var(--text); }
+    .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 1rem; flex-wrap: wrap;}
+    
+    /* Modals & Forms */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+    .modal-content { background: var(--surface); padding: 2rem; border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; border: 1px solid var(--border);}
+    .close-modal { position: absolute; top: 16px; right: 20px; font-size: 1.8rem; cursor: pointer; color: var(--text-muted); line-height: 1; transition: 0.2s;}
+    .close-modal:hover { color: var(--text); }
+
+    .preset-container { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .preset-btn { background: var(--gray-bg); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 99px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    .preset-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .form-group { margin-bottom: 1rem; text-align: left; }
+    .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .form-group input[type="text"], .form-group input[type="number"], .form-group input[type="date"], .form-group select { width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--bg); color: var(--text); box-sizing: border-box; font-family: inherit;}
+    .form-group input:focus, .form-group select:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+
+    .required-asterisk { color: var(--danger); margin-left: 2px; }
+
+    .radio-group { display: flex; gap: 1rem; margin-bottom: 0.8rem; background: var(--gray-bg); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;}
+    .radio-group label { display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; margin: 0; color: var(--text);}
+    .radio-group input[type="radio"] { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;}
+
+    .checkbox-group { display: flex; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0; }
+    .checkbox-group label { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 0.95rem; margin: 0; cursor: pointer;}
+    .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;}
+
+    /* Toast Notifications */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+    .toast { background: var(--surface); color: var(--text); padding: 1rem 1.5rem; border-radius: 12px; box-shadow: 0 10px 25px var(--shadow); border-left: 4px solid var(--primary); font-weight: 500; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1), fadeOut 0.3s 2.7s forwards; }
+    .toast.success { border-left-color: var(--success); }
+    .toast.warning { border-left-color: var(--warning); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(10px); } }
+
+    /* Footer & Smart UPI */
+    .footer { text-align: center; padding: 2rem 1rem; margin-top: 3rem; background: var(--surface); border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.95rem; }
+    .footer a { color: var(--primary); text-decoration: none; font-weight: 500;}
+    .footer a:hover { text-decoration: underline; }
+    .upi-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); color: var(--text); padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; text-decoration: none !important; margin: 1rem 0; cursor: pointer; border: 1px solid var(--border); box-shadow: 0 4px 6px var(--shadow); font-family: inherit;}
+    .upi-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px var(--shadow); background: var(--gray-bg); }
+    .qr-code { width: 200px; height: 200px; margin: 1.5rem auto; border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: white; display: block;}
+
+    @media (max-width: 768px) {
+      .header { flex-direction: column; align-items: stretch; }
+      .header-right { justify-content: flex-end; }
+      .action-group { width: 100%; justify-content: space-between; }
+      .action-group .btn { flex: 1; justify-content: center; }
+      .routine-bar { flex-direction: column; align-items: stretch; }
+      .card-actions .btn { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header">
+    <a href="#" class="logo">Medi<span>Vault</span></a>
+    
+    <div class="header-center">
+      <div class="profile-tabs" id="profile-tabs-container"></div>
+    </div>
+
+    <div class="header-right">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Dark Mode">
+        <svg id="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        <svg id="sun-icon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-sort-group">
+        <input type="text" id="search-input" class="search-bar" placeholder="Search medicines...">
+        <select id="sort-dropdown" class="sort-dropdown">
+          <option value="least">Sort: Least Days Left</option>
+          <option value="most">Sort: Most Days Left</option>
+          <option value="az">Sort: Name (A-Z)</option>
+        </select>
+        <select id="view-mode-dropdown" class="sort-dropdown" style="max-width: 150px; border-color: var(--primary);">
+          <option value="active">Active Vault</option>
+          <option value="archived">📦 Archived</option>
+        </select>
+      </div>
+      
+      <div class="action-group">
+        <input type="file" id="import-file" style="display:none" accept=".json,application/json">
+        <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">↓ Import</button>
+        <button class="btn btn-outline" onclick="exportData()">↑ Export</button>
+        <button class="btn btn-outline" onclick="printRefillList()">🖨️ Print List</button>
+        <button class="btn btn-primary" onclick="openAddModal()">+ Add Medicine</button>
+      </div>
+    </div>
+
+    <!-- Quick Routines -->
+    <div class="routine-bar" id="routine-bar">
+      <span>1-Click Bulk Routines:</span>
+      <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Morning'}], 'Logged Morning Routine')">🌅 Morning</button>
+      <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Noon'}], 'Logged Noon Routine')">☀️ Noon</button>
+      <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Night'}], 'Logged Night Routine')">🌙 Night</button>
+    </div>
+
+    <!-- Grid -->
+    <div class="vault-grid" id="med-grid"></div>
+
+    <!-- Recent Logs -->
+    <div class="logs-panel" id="logs-panel">
+      <div class="logs-header">
+        🕒 Recent Session Activity
+        <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">Quick-undo accidental logs</span>
+      </div>
+      <div id="logs-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+    </div>
+
+  </main>
+
+  <!-- ADD MEDICINE MODAL -->
+  <div id="add-modal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeAddModal()">&times;</span>
+      <h2 style="margin-top: 0;">Add to Vault</h2>
+      
+      <div class="preset-container">
+        <button class="preset-btn" onclick="applyPreset('Paracetamol', 1, 'tablet', ['SOS'])">Paracetamol (SOS)</button>
+        <button class="preset-btn" onclick="applyPreset('Vitamin C', 1, 'tablet', ['Morning'])">Vitamin C</button>
+        <button class="preset-btn" onclick="applyPreset('Cough Syrup', 10, 'ml', ['Morning', 'Night'])">Cough Syrup</button>
+      </div>
+
+      <form id="add-med-form">
+        <div class="form-group">
+          <label>Medicine Name <span class="required-asterisk">*</span></label>
+          <input type="text" id="fm-name" required placeholder="e.g. Omega 3 Fish Oil">
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Existing active medicines with this name will be grouped as a new batch.</div>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group" style="flex: 1;">
+            <label>Amount per Dose <span class="required-asterisk">*</span></label>
+            <input type="number" id="fm-dosage" required min="0.1" step="0.1" value="1" title="How many pills/ml taken at one time">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>Measurement Unit <span class="required-asterisk">*</span></label>
+            <select id="fm-unit">
+              <option value="tablet">Tablets</option>
+              <option value="capsule">Capsules</option>
+              <option value="ml">ml (Liquid)</option>
+              <option value="gram">grams (Topical)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>How is this medicine taken? <span class="required-asterisk">*</span></label>
+          
+          <!-- QA FIX: Clearer Radio toggle for Routine vs SOS -->
+          <div class="radio-group">
+            <label><input type="radio" name="fm-routine-type" value="scheduled" checked> 🕒 Scheduled Routine</label>
+            <label><input type="radio" name="fm-routine-type" value="sos"> 💊 SOS (As Needed)</label>
+          </div>
+          
+          <!-- Hidden dynamically if SOS is selected -->
+          <div id="scheduled-timings-container" class="checkbox-group" style="padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px;">
+            <label><input type="checkbox" name="fm-timing" value="Morning" checked> 🌅 Morning</label>
+            <label><input type="checkbox" name="fm-timing" value="Noon"> ☀️ Noon</label>
+            <label><input type="checkbox" name="fm-timing" value="Night"> 🌙 Night</label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Food Rule <span class="required-asterisk">*</span></label>
+          <select id="fm-food">
+            <option value="After Food">After Food</option>
+            <option value="Before Food">Before Food</option>
+            <option value="Independent">Independent</option>
+          </select>
+        </div>
+
+        <div style="background: var(--gray-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
+          <label style="display: block; font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">Batch Details</label>
+          
+          <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label style="font-size: 0.8rem;">Total Stock Qty <span class="required-asterisk">*</span></label>
+              <!-- QA FIX: Strict min attribute -->
+              <input type="number" id="fm-qty" required min="0.1" step="0.1" placeholder="e.g. 30">
+            </div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label style="font-size: 0.8rem;">Expiry Date <span class="required-asterisk">*</span></label>
+              <input type="date" id="fm-exp" required>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label style="font-size: 0.8rem;">Batch Number (Optional)</label>
+              <input type="text" id="fm-batch-num" placeholder="e.g. B-882">
+            </div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label style="font-size: 0.8rem;">Pharmacy Name (Optional)</label>
+              <input type="text" id="fm-pharmacy" placeholder="e.g. Apollo Pharmacy">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Save to Vault</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- UPI QR MODAL -->
+  <div id="upi-modal" class="modal-overlay">
+    <div class="modal-content" style="text-align: center;">
+      <span id="close-modal" class="close-modal">&times;</span>
+      <h3 style="margin-top:0; font-size: 1.5rem;">Support via UPI</h3>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">Scan this QR code with any UPI app</p>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3Dsomsai2kss-2%40okicici%26pn%3DSom%2520Sai%2520Keerthi%26cu%3DINR" alt="UPI QR Code" class="qr-code">
+      <p style="font-weight: 600; font-size: 1rem; margin-bottom: 0;">somsai2kss-2@okicici</p>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p>Built as a hobby project leveraging the power of <strong>Prompt Engineering</strong> & AI.</p>
+    <button class="upi-btn" id="upi-trigger">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--primary)"><path d="M2 12h20"></path><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"></path><path d="M4 12V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6"></path><path d="M12 4v8"></path></svg>
+      Support via UPI
+    </button>
+    <p style="margin-top: 1rem;">
+      <a href="https://sskeerthi7.github.io/safecrop/" target="_blank">Check out SafeCrop</a> | 
+      Connect with me on <a href="https://www.linkedin.com/in/som-sai-keerthi" target="_blank">LinkedIn</a>
+    </p>
+  </footer>
+
+  <script>
+    // --- APP STATE ---
+    let profileList = JSON.parse(localStorage.getItem('medivault_profiles')) || ['My Vault', 'Mom', 'Dad'];
+    let currentProfile = profileList[0];
+    let db = JSON.parse(localStorage.getItem('medivault_db')) || {};
+    let sessionLogs = []; 
+
+    // Backward Compatibility Migrations
+    Object.keys(db).forEach(prof => {
+      db[prof].forEach(med => {
+        if (typeof med.timing === 'string') med.timing = [med.timing];
+        if (typeof med.archived === 'undefined') med.archived = false;
+        
+        if(med.batches) {
+           med.batches.forEach(b => {
+             if (typeof b.batchNum === 'undefined') b.batchNum = "";
+             if (typeof b.pharmacy === 'undefined') b.pharmacy = "";
+           });
+        }
+      });
+    });
+
+    profileList.forEach(prof => {
+      if (!db[prof]) db[prof] = [];
+    });
+    
+    if (db['My Vault'] && db['My Vault'].length === 0 && Object.keys(db).length <= 3) {
+      db['My Vault'] = [
+        { id: Date.now(), name: "Omega 3 Fish Oil", dosage: 2, unit: "capsule", timing: ["Morning"], food: "After Food", archived: false, batches: [{qty: 12, exp: "2027-12-01", batchNum: "B-101", pharmacy: "Apollo"}] }
+      ];
+    }
+    saveDB();
+
+    function saveDB() {
+      localStorage.setItem('medivault_profiles', JSON.stringify(profileList));
+      localStorage.setItem('medivault_db', JSON.stringify(db));
+    }
+
+    // --- DYNAMIC PROFILE MANAGEMENT ---
+    function renderTabs() {
+      const container = document.getElementById('profile-tabs-container');
+      container.innerHTML = '';
+      
+      profileList.forEach(prof => {
+        const isActive = prof === currentProfile ? 'active' : '';
+        const tab = document.createElement('div');
+        tab.className = `tab ${isActive}`;
+        tab.onclick = () => switchProfile(prof);
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.innerText = prof;
+        tab.appendChild(nameSpan);
+
+        if (isActive) {
+          const editBtn = document.createElement('button');
+          editBtn.className = 'profile-action-btn';
+          editBtn.innerHTML = '✎';
+          editBtn.title = 'Rename Profile';
+          editBtn.onclick = (e) => { e.stopPropagation(); renameProfile(prof); };
+          tab.appendChild(editBtn);
+
+          if (profileList.length > 1) {
+            const delBtn = document.createElement('button');
+            delBtn.className = 'profile-action-btn delete';
+            delBtn.innerHTML = '✕';
+            delBtn.title = 'Delete Profile';
+            delBtn.onclick = (e) => { e.stopPropagation(); deleteProfile(prof); };
+            tab.appendChild(delBtn);
+          }
+        }
+        container.appendChild(tab);
+      });
+
+      if (profileList.length < 5) {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-profile-btn';
+        addBtn.innerText = '+ Add Person';
+        addBtn.onclick = addNewProfile;
+        container.appendChild(addBtn);
+      }
+    }
+
+    function switchProfile(profileName) {
+      currentProfile = profileName;
+      sessionLogs = []; 
+      if(!db[currentProfile]) db[currentProfile] = [];
+      document.getElementById("search-input").value = ""; 
+      document.getElementById("view-mode-dropdown").value = "active";
+      renderTabs();
+      renderCards(); 
+      renderLogs();
+    }
+
+    function addNewProfile() {
+      if (profileList.length >= 5) {
+        showToast("Maximum of 5 profiles reached.", "warning");
+        return;
+      }
+      const newName = prompt("Enter a name for the new profile:");
+      if (!newName || !newName.trim()) return;
+      
+      const cleanName = sanitize(newName.trim());
+      if (profileList.includes(cleanName)) {
+        showToast("Profile name already exists.", "warning");
+        return;
+      }
+
+      profileList.push(cleanName);
+      db[cleanName] = [];
+      saveDB();
+      switchProfile(cleanName);
+      showToast(`Profile '${cleanName}' created.`, "success");
+    }
+
+    function renameProfile(oldName) {
+      const newName = prompt("Rename profile to:", oldName);
+      if (!newName || !newName.trim() || newName.trim() === oldName) return;
+      
+      const cleanName = sanitize(newName.trim());
+      if (profileList.includes(cleanName)) {
+        showToast("Profile name already exists.", "warning");
+        return;
+      }
+
+      const index = profileList.indexOf(oldName);
+      profileList[index] = cleanName;
+      db[cleanName] = db[oldName];
+      delete db[oldName];
+
+      saveDB();
+      currentProfile = cleanName;
+      renderTabs();
+      showToast("Profile renamed successfully.", "success");
+    }
+
+    function deleteProfile(profileName) {
+      if (profileList.length <= 1) return;
+      if (!confirm(`Are you sure you want to delete '${profileName}'? All their medicine records will be lost.`)) return;
+
+      const index = profileList.indexOf(profileName);
+      profileList.splice(index, 1);
+      delete db[profileName];
+      
+      saveDB();
+      switchProfile(profileList[0]);
+      showToast(`Profile '${profileName}' deleted.`, "success");
+    }
+
+    // --- UTILITIES (Dates, Sanitize & Toasts) ---
+    function sanitize(str) {
+      return str.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = type === 'success' ? `✓ ${message}` : `⚠️ ${message}`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    function parseLocalDate(dateString) {
+      if (!dateString) return new Date(NaN);
+      if (dateString.includes('-')) {
+        const parts = dateString.split('-');
+        if (parts.length === 3) return new Date(parts[0], parts[1] - 1, parts[2]);
+      }
+      return new Date(dateString);
+    }
+
+    function formatDate(dateString) {
+      const d = parseLocalDate(dateString);
+      if (isNaN(d)) return "N/A";
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${String(d.getDate()).padStart(2, '0')}-${months[d.getMonth()]}-${d.getFullYear()}`;
+    }
+
+    function toggleArchive(medId, status) {
+      let med = db[currentProfile].find(m => m.id === medId);
+      if(med) {
+        med.archived = status;
+        saveDB();
+        renderCards();
+        showToast(status ? `${med.name} sent to Archive.` : `${med.name} restored to active Vault.`, "success");
+      }
+    }
+
+    // --- QA FIX 1: ROUTINE VS SOS RADIO LOGIC ---
+    const routineRadios = document.querySelectorAll('input[name="fm-routine-type"]');
+    const scheduledTimingsContainer = document.getElementById('scheduled-timings-container');
+    
+    routineRadios.forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        if (e.target.value === 'sos') {
+          scheduledTimingsContainer.style.display = 'none';
+        } else {
+          scheduledTimingsContainer.style.display = 'flex';
+        }
+      });
+    });
+
+    // --- CALCULATIONS ---
+    function getCalculatedInventory() {
+      let activeInventory = db[currentProfile] || [];
+      activeInventory.forEach(med => {
+        let totalQty = med.batches.reduce((sum, b) => sum + b.qty, 0);
+        let isSOS = med.timing.includes("SOS");
+        
+        if (isSOS) {
+          med.daysLeft = Infinity; 
+          med.dateStr = "N/A (SOS)";
+        } else {
+          let intakeCount = med.timing.length === 0 ? 1 : med.timing.length;
+          let dailyConsumption = med.dosage * intakeCount;
+          med.daysLeft = dailyConsumption > 0 ? Math.floor(totalQty / dailyConsumption) : 0;
+          
+          let today = new Date();
+          today.setHours(0,0,0,0);
+          let depletionDate = new Date(today);
+          depletionDate.setDate(depletionDate.getDate() + med.daysLeft);
+          med.dateStr = formatDate(depletionDate.toISOString().split('T')[0]);
+        }
+      });
+      return activeInventory;
+    }
+
+    // --- PRINT REFILL LIST ---
+    function printRefillList() {
+      let inventory = getCalculatedInventory().filter(m => m.daysLeft <= 14 && !m.archived);
+      if(inventory.length === 0) {
+        showToast("No active routine medicines need refilling right now.", "success");
+        return;
+      }
+
+      let printWin = window.open('', '_blank');
+      let html = `
+        <html><head><title>Pharmacy Refill List</title>
+          <style>
+            body { font-family: system-ui, sans-serif; padding: 2rem; color: #0f172a; }
+            table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+            th, td { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
+            th { background-color: #f1f5f9; }
+            .danger { color: #ef4444; font-weight: bold; }
+          </style>
+        </head><body>
+          <h2>Refill List for ${currentProfile}</h2>
+          <table><tr><th>Medicine Name</th><th>Status</th><th>Unit</th><th>Expiring Batch Details</th></tr>
+      `;
+
+      inventory.forEach(m => {
+        let statusClass = m.daysLeft <= 3 ? "danger" : "";
+        let extraPrint = [];
+        if(m.batches[0] && m.batches[0].batchNum) extraPrint.push(`ID: ${m.batches[0].batchNum}`);
+        if(m.batches[0] && m.batches[0].pharmacy) extraPrint.push(m.batches[0].pharmacy);
+        let batchDetail = extraPrint.length > 0 ? ` (${extraPrint.join(', ')})` : '';
+
+        html += `<tr><td><strong>${m.name}</strong></td><td class="${statusClass}">${m.daysLeft} days left</td><td>${m.unit}</td><td>${m.batches[0] ? formatDate(m.batches[0].exp) + batchDetail : 'N/A'}</td></tr>`;
+      });
+      html += `</table></body></html>`;
+      printWin.document.write(html);
+      printWin.document.close();
+      setTimeout(() => printWin.print(), 250);
+    }
+
+    // --- LOGIC: DEDUCTION WITH UNDO HISTORY ---
+    function executeDeduction(filters, successMessage) {
+      let isArchiveView = document.getElementById("view-mode-dropdown").value === "archived";
+      if (isArchiveView) {
+        showToast("Cannot log routines from the Archive view.", "warning");
+        return;
+      }
+
+      let activeInventory = db[currentProfile] || [];
+      let targets = activeInventory.filter(med => {
+        if(med.archived) return false;
+        return filters.every(f => {
+          let key = Object.keys(f)[0];
+          if (key === 'timing') return Array.isArray(med.timing) && med.timing.includes(f[key]);
+          return med[key] === f[key];
+        });
+      });
+
+      if (targets.length === 0) {
+        showToast("No active medicines match this routine.", "warning");
+        return;
+      }
+
+      let snapshot = targets.map(med => ({ id: med.id, oldBatches: JSON.parse(JSON.stringify(med.batches)) }));
+      let deductedCount = 0;
+
+      targets.forEach(med => {
+        let remainingToDeduct = med.dosage; 
+        let originalTotal = med.batches.reduce((sum, b) => sum + b.qty, 0);
+        if (originalTotal < remainingToDeduct) return; 
+        
+        deductedCount++;
+        for (let i = 0; i < med.batches.length; i++) {
+          if (remainingToDeduct <= 0) break;
+          if (med.batches[i].qty >= remainingToDeduct) {
+            med.batches[i].qty -= remainingToDeduct;
+            remainingToDeduct = 0;
+          } else {
+            remainingToDeduct -= med.batches[i].qty;
+            med.batches[i].qty = 0;
+          }
+        }
+        med.batches = med.batches.filter(b => b.qty > 0);
+      });
+
+      if (deductedCount === 0) {
+        showToast("Out of stock! Cannot log dose.", "warning");
+        return;
+      }
+
+      const logEntry = {
+        id: Date.now(), message: successMessage,
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+        snapshot: snapshot
+      };
+      
+      sessionLogs.unshift(logEntry);
+      if(sessionLogs.length > 5) sessionLogs.pop(); 
+
+      saveDB();
+      renderCards();
+      renderLogs();
+      showToast(successMessage, "success");
+    }
+
+    function undoLog(logId) {
+      const logIndex = sessionLogs.findIndex(l => l.id === logId);
+      if (logIndex === -1) return;
+
+      const log = sessionLogs[logIndex];
+      log.snapshot.forEach(snap => {
+        let med = db[currentProfile].find(m => m.id === snap.id);
+        if (med) med.batches = snap.oldBatches;
+      });
+
+      sessionLogs.splice(logIndex, 1);
+      saveDB(); renderCards(); renderLogs();
+      showToast("Action successfully undone.", "success");
+    }
+
+    // --- RENDER ENGINES ---
+    function renderLogs() {
+      const panel = document.getElementById("logs-panel");
+      const container = document.getElementById("logs-container");
+      
+      if (sessionLogs.length === 0) {
+        panel.style.display = 'none';
+        return;
+      }
+      
+      panel.style.display = 'block';
+      container.innerHTML = sessionLogs.map(log => `
+        <div class="log-item">
+          <div><strong>${log.message}</strong> <span style="color:var(--text-muted); margin-left:8px;">${log.time}</span></div>
+          <button class="log-undo-btn" onclick="undoLog(${log.id})">↺ Undo</button>
+        </div>
+      `).join('');
+    }
+
+    function renderCards() {
+      const grid = document.getElementById("med-grid");
+      const searchTerm = document.getElementById("search-input").value.toLowerCase();
+      const sortType = document.getElementById("sort-dropdown").value;
+      const viewMode = document.getElementById("view-mode-dropdown").value;
+      
+      document.getElementById("routine-bar").style.display = (viewMode === "archived") ? "none" : "flex";
+      grid.innerHTML = "";
+
+      let inventory = getCalculatedInventory();
+      let filtered = inventory.filter(med => {
+        let matchesSearch = med.name.toLowerCase().includes(searchTerm);
+        let matchesArchived = (viewMode === "archived") ? med.archived : !med.archived;
+        return matchesSearch && matchesArchived;
+      });
+
+      if (sortType === "least") filtered.sort((a, b) => a.daysLeft - b.daysLeft);
+      if (sortType === "most") filtered.sort((a, b) => b.daysLeft - a.daysLeft);
+      if (sortType === "az") filtered.sort((a, b) => a.name.localeCompare(b.name));
+
+      if (filtered.length === 0 && viewMode === "archived") {
+         grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 3rem; color: var(--text-muted);">No archived medicines found.</div>`;
+         return;
+      }
+
+      filtered.forEach(med => {
+        let isSOS = med.daysLeft === Infinity;
+        let totalQty = med.batches.reduce((sum, b) => sum + b.qty, 0);
+        let outOfStock = totalQty < med.dosage;
+
+        let statusClass = med.archived ? "archived-status" : "";
+        if (!med.archived && !isSOS && med.daysLeft <= 3) statusClass += " danger";
+        else if (!med.archived && !isSOS && med.daysLeft <= 14) statusClass += " warning";
+        if (isSOS) statusClass += " sos-mode";
+
+        let percent = isSOS ? 100 : Math.min(100, Math.max(0, (med.daysLeft / 30) * 100));
+        let barColor = statusClass.includes("danger") ? "var(--danger)" : (statusClass.includes("warning") ? "var(--warning)" : (isSOS ? "var(--primary)" : "var(--success)"));
+        
+        let displayDaysLeft = isSOS ? "SOS" : `${med.daysLeft} Days`;
+        let displayDepletes = isSOS ? "As Needed (No fixed depletion)" : (med.archived ? 'Archived Record' : `Depletes on ${med.dateStr}`);
+
+        let today = new Date();
+        today.setHours(0,0,0,0);
+
+        let batchesHtml = med.batches.map(b => {
+          let expDate = parseLocalDate(b.exp);
+          let isExpired = expDate < today;
+          let expStyle = isExpired ? "color: var(--danger); font-weight: bold;" : "color: var(--text-muted);";
+          let expLabel = isExpired ? "⚠️ Expired: " : "Exp: ";
+          
+          let extra = [];
+          if (b.batchNum) extra.push(`ID: ${b.batchNum}`);
+          if (b.pharmacy) extra.push(b.pharmacy);
+          let extraHtml = extra.length > 0 ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">${extra.join(' • ')}</div>` : '';
+          
+          return `
+          <div class="batch-item" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between;">
+              <span><strong>${b.qty}</strong> ${med.unit} left</span>
+              <span style="${expStyle}">${expLabel}${formatDate(b.exp)}</span>
+            </div>
+            ${extraHtml}
+          </div>`;
+        }).join('');
+
+        const timingIcons = { "Morning": "🌅 Morning", "Noon": "☀️ Noon", "Night": "🌙 Night", "SOS": "💊 SOS" };
+        let displayTimings = med.timing.map(t => timingIcons[t] || t).join(", ");
+        
+        let timingBadgeClass = "timing-badge" + (isSOS ? " sos" : "");
+
+        // QA FIX 3: Disable Take button if physical stock drops below single dosage limit (even for SOS)
+        let primaryActionBtn = med.archived 
+          ? `<button class="btn btn-outline" style="flex:2;" onclick="toggleArchive(${med.id}, false)">🔙 Restore Active</button>`
+          : `<button class="btn btn-primary" style="flex:2;" onclick='executeDeduction([{"id": ${med.id}}], "Logged ${med.dosage} ${med.unit} of ${med.name}")' ${outOfStock ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>✓ Take ${med.dosage} ${med.unit}</button>
+             <button class="btn btn-outline" style="flex:1;" title="Archive" onclick="toggleArchive(${med.id}, true)">📦</button>`;
+
+        const card = `
+          <div class="med-card ${statusClass}">
+            <div class="med-header">
+              <h3 class="med-name">${med.name}</h3>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <span class="${timingBadgeClass}">${displayTimings}</span>
+                <span class="food-badge">${med.food}</span>
+              </div>
+            </div>
+            
+            <div class="status-container">
+              <div class="days-left">${displayDaysLeft}</div>
+              <div class="run-out-date">${displayDepletes}</div>
+              
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: ${percent}%; background-color: ${barColor};"></div>
+              </div>
+            </div>
+
+            <div style="flex-grow: 1; margin-top: 1rem;">
+              ${batchesHtml || '<div class="batch-item" style="color:var(--danger)">Out of Stock</div>'}
+            </div>
+
+            <div class="card-actions">
+              ${primaryActionBtn}
+            </div>
+          </div>
+        `;
+        grid.innerHTML += card;
+      });
+    }
+
+    // --- MODAL, PRESETS & MERGE LOGIC ---
+    const addModal = document.getElementById("add-modal");
+    
+    function openAddModal() { 
+      // QA FIX 2: Protect against time-travel by setting min date dynamically to exactly today
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById('fm-exp').min = todayStr;
+      addModal.style.display = "flex"; 
+    }
+    
+    function closeAddModal() { 
+      addModal.style.display = "none"; 
+      document.getElementById("add-med-form").reset(); 
+      // Scrub UI state back to default
+      document.querySelector('input[name="fm-routine-type"][value="scheduled"]').checked = true;
+      document.getElementById('scheduled-timings-container').style.display = 'flex';
+    }
+    
+    function applyPreset(name, dosage, unit, timingArray) {
+      document.getElementById("fm-name").value = name;
+      document.getElementById("fm-dosage").value = dosage;
+      document.getElementById("fm-unit").value = unit;
+      
+      const isSOS = timingArray.includes("SOS");
+      if (isSOS) {
+        document.querySelector('input[name="fm-routine-type"][value="sos"]').checked = true;
+        document.getElementById('scheduled-timings-container').style.display = 'none';
+      } else {
+        document.querySelector('input[name="fm-routine-type"][value="scheduled"]').checked = true;
+        document.getElementById('scheduled-timings-container').style.display = 'flex';
+        const checkboxes = document.querySelectorAll('input[name="fm-timing"]');
+        checkboxes.forEach(cb => { cb.checked = timingArray.includes(cb.value); });
+      }
+      showToast(`Applied preset for ${name}`, "success");
+    }
+
+    document.getElementById("add-med-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      // QA FIX 2: Strict Expiry Date JS validation 
+      const inputExp = document.getElementById("fm-exp").value;
+      const expDateObj = new Date(inputExp);
+      const todayObj = new Date();
+      todayObj.setHours(0,0,0,0);
+      
+      if (!inputExp || expDateObj < todayObj) {
+        showToast("Expiry date cannot be in the past.", "warning");
+        return; 
+      }
+      if (expDateObj.getFullYear() > 2100) {
+        showToast("Please enter a realistic future date.", "warning");
+        return; 
+      }
+
+      // QA FIX 4: Strict absolute math on inputs
+      let rawDosage = parseFloat(document.getElementById("fm-dosage").value);
+      let rawQty = parseFloat(document.getElementById("fm-qty").value);
+      if (isNaN(rawDosage) || rawDosage <= 0 || isNaN(rawQty) || rawQty <= 0) {
+        showToast("Dosage and Quantity must be positive numbers.", "warning");
+        return;
+      }
+      
+      let selectedTimings = [];
+      const isSOS = document.querySelector('input[name="fm-routine-type"]:checked').value === 'sos';
+      if (isSOS) {
+        selectedTimings = ["SOS"];
+      } else {
+        selectedTimings = Array.from(document.querySelectorAll('input[name="fm-timing"]:checked')).map(cb => cb.value);
+        if (selectedTimings.length === 0) {
+          showToast("Please select at least one scheduled timing.", "warning");
+          return;
+        }
+      }
+
+      const nameVal = sanitize(document.getElementById("fm-name").value.trim());
+
+      const newBatch = {
+        qty: rawQty,
+        exp: inputExp,
+        batchNum: sanitize(document.getElementById("fm-batch-num").value.trim()),
+        pharmacy: sanitize(document.getElementById("fm-pharmacy").value.trim())
+      };
+
+      if (!db[currentProfile]) db[currentProfile] = [];
+
+      let existingMed = db[currentProfile].find(m => m.name.toLowerCase() === nameVal.toLowerCase() && !m.archived);
+
+      if (existingMed) {
+         existingMed.batches.push(newBatch);
+         existingMed.batches.sort((a, b) => parseLocalDate(a.exp) - parseLocalDate(b.exp));
+         showToast(`Added new inventory batch to existing ${existingMed.name}.`, "success");
+      } else {
+         const newMed = {
+            id: Date.now(),
+            name: nameVal,
+            dosage: rawDosage,
+            unit: document.getElementById("fm-unit").value,
+            timing: selectedTimings,
+            food: document.getElementById("fm-food").value,
+            archived: false,
+            batches: [newBatch]
+         };
+         db[currentProfile].push(newMed);
+         showToast(`${newMed.name} added to ${currentProfile} vault.`, "success");
+      }
+
+      saveDB();
+      document.getElementById("view-mode-dropdown").value = "active";
+      renderCards();
+      closeAddModal();
+    });
+
+    // --- THEME LOGIC ---
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const htmlElement = document.documentElement;
+    themeToggleBtn.addEventListener('click', () => {
+      const currentTheme = htmlElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      htmlElement.setAttribute('data-theme', newTheme);
+      document.getElementById('moon-icon').style.display = newTheme === 'dark' ? 'none' : 'block';
+      document.getElementById('sun-icon').style.display = newTheme === 'dark' ? 'block' : 'none';
+    });
+
+    // JSON Export/Import Logic
+    function exportData() {
+      const timestamp = new Date().getTime();
+      const profileStr = currentProfile.replace(/\s+/g, '_').toLowerCase();
+      const fileName = `medivault_${profileStr}_${timestamp}.json`;
+      
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db[currentProfile], null, 2));
+      const link = document.createElement('a');
+      link.href = dataStr; link.download = fileName;
+      document.body.appendChild(link);
+      link.click(); link.remove();
+      showToast("Vault backup downloaded successfully.", "success");
+    }
+
+    document.getElementById('import-file').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.type !== "application/json" && !file.name.endsWith('.json')) {
+        showToast("Invalid file type. Please upload a .json file.", "warning");
+        e.target.value = ''; return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const importedData = JSON.parse(event.target.result);
+          if (!Array.isArray(importedData)) throw new Error("Format error");
+          
+          importedData.forEach(med => {
+            if (typeof med.timing === 'string') med.timing = [med.timing];
+            if (typeof med.archived === 'undefined') med.archived = false;
+            if (med.batches) {
+               med.batches.forEach(b => {
+                 if (typeof b.batchNum === 'undefined') b.batchNum = "";
+                 if (typeof b.pharmacy === 'undefined') b.pharmacy = "";
+               });
+            }
+          });
+
+          db[currentProfile] = importedData;
+          saveDB(); renderCards();
+          showToast(`Backup restored to ${currentProfile}.`, "success");
+        } catch (err) {
+          showToast("Invalid backup file structure.", "warning");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = ''; 
+    });
+
+    // Event Listeners
+    document.getElementById("search-input").addEventListener("input", renderCards);
+    document.getElementById("sort-dropdown").addEventListener("change", renderCards);
+    document.getElementById("view-mode-dropdown").addEventListener("change", renderCards);
+
+    window.addEventListener('click', (e) => {
+      if (e.target === addModal) closeAddModal();
+      const upiModal = document.getElementById('upi-modal');
+      if (e.target === upiModal) upiModal.style.display = 'none';
+    });
+
+    // Smart UPI Implementation
+    const upiTrigger = document.getElementById('upi-trigger');
+    upiTrigger.addEventListener('click', () => {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        window.location.href = "upi://pay?pa=somsai2kss-2@okicici&pn=Som%20Sai%20Keerthi&cu=INR";
+      } else {
+        document.getElementById('upi-modal').style.display = 'flex';
+      }
+    });
+    document.getElementById('close-modal').addEventListener('click', () => {
+      document.getElementById('upi-modal').style.display = 'none';
+    });
+
+    // Initialization
+    renderTabs();
+    renderCards();
+    renderLogs();
+  </script>
+</body>
+</html>
