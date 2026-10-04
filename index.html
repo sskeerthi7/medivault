@@ -15,30 +15,16 @@
 
   <style>
     :root { 
-      --primary: #2563eb; 
-      --primary-hover: #1d4ed8;
-      --success: #10b981; 
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --bg: #f8fafc; 
-      --surface: #ffffff; 
-      --gray-bg: #f1f5f9; 
-      --text: #0f172a; 
-      --text-muted: #64748b; 
-      --border: #e2e8f0; 
-      --shadow: rgba(0, 0, 0, 0.05);
+      --primary: #2563eb; --primary-hover: #1d4ed8; --success: #10b981; 
+      --warning: #f59e0b; --danger: #ef4444; --bg: #f8fafc; 
+      --surface: #ffffff; --gray-bg: #f1f5f9; --text: #0f172a; 
+      --text-muted: #64748b; --border: #e2e8f0; --shadow: rgba(0, 0, 0, 0.05);
     }
 
     [data-theme="dark"] {
-      --primary: #3b82f6; 
-      --primary-hover: #60a5fa; 
-      --success: #10b981; 
-      --bg: #0f172a; 
-      --surface: #1e293b; 
-      --gray-bg: #0f172a; 
-      --text: #f8fafc; 
-      --text-muted: #94a3b8; 
-      --border: #334155; 
+      --primary: #3b82f6; --primary-hover: #60a5fa; --success: #10b981; 
+      --bg: #0f172a; --surface: #1e293b; --gray-bg: #0f172a; 
+      --text: #f8fafc; --text-muted: #94a3b8; --border: #334155; 
       --shadow: rgba(0, 0, 0, 0.25);
     }
 
@@ -55,6 +41,9 @@
     .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .tab:hover:not(.active) { color: var(--text); }
     
+    .profile-action-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0 2px; font-size: 0.85rem; transition: 0.2s;}
+    .profile-action-btn:hover { color: var(--primary); }
+    .profile-action-btn.delete:hover { color: var(--danger); }
     .add-profile-btn { padding: 6px 12px; font-size: 0.85rem; font-weight: 600; background: transparent; border: 1px dashed var(--border); border-radius: 6px; color: var(--text-muted); cursor: pointer; white-space: nowrap;}
     .add-profile-btn:hover { border-color: var(--primary); color: var(--primary); }
 
@@ -88,6 +77,7 @@
     
     .timing-badge { font-size: 0.8rem; background: rgba(37, 99, 235, 0.1); padding: 4px 8px; border-radius: 6px; color: var(--primary); font-weight: 600;}
     .timing-badge.sos { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
+    .food-badge { font-size: 0.8rem; background: var(--gray-bg); padding: 4px 8px; border-radius: 6px; color: var(--text-muted); font-weight: 600; }
     
     .status-container { margin: 1rem 0; text-align: center; }
     .days-left { font-size: 2rem; font-weight: 800; color: var(--success); line-height: 1; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 0.5rem;}
@@ -101,10 +91,11 @@
     .sos-mode .days-left { color: var(--primary); }
     .archived-status { opacity: 0.6; filter: grayscale(1); }
 
+    .batch-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; padding: 8px 0; border-top: 1px solid var(--border); color: var(--text); }
     .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 1rem; flex-wrap: wrap;}
     
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-    .modal-content { background: var(--surface); padding: 2rem; border-radius: 16px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; border: 1px solid var(--border);}
+    .modal-content { background: var(--surface); padding: 2rem; border-radius: 16px; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; border: 1px solid var(--border);}
     .close-modal { position: absolute; top: 16px; right: 20px; font-size: 1.8rem; cursor: pointer; color: var(--text-muted); line-height: 1;}
 
     .auth-tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; background: var(--gray-bg); padding: 4px; border-radius: 8px; }
@@ -114,7 +105,14 @@
     .form-group { margin-bottom: 1rem; text-align: left; }
     .form-group label { display: flex; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
     .form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--bg); color: var(--text); box-sizing: border-box; font-family: inherit;}
+    .required-asterisk { color: var(--danger); margin-left: 4px; }
+
+    .radio-group { display: flex; gap: 1rem; margin-bottom: 0.8rem; background: var(--gray-bg); padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap;}
+    .radio-group label { display: flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; margin: 0; color: var(--text);}
     
+    .checkbox-group { display: flex; gap: 1rem; flex-wrap: wrap; padding: 0.5rem 0; }
+    .checkbox-group label { display: flex; align-items: center; gap: 6px; font-weight: 500; cursor: pointer;}
+
     .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
     .toast { background: var(--surface); color: var(--text); padding: 1rem 1.5rem; border-radius: 12px; box-shadow: 0 10px 25px var(--shadow); border-left: 4px solid var(--primary); font-weight: 500; display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1), fadeOut 0.3s 2.7s forwards; }
     
@@ -129,7 +127,7 @@
     <a href="#" class="logo">Medi<span>Vault</span></a>
     <div class="header-center"><div class="profile-tabs" id="profile-tabs-container"></div></div>
     <div class="header-right">
-      <button class="btn btn-outline" id="auth-status-btn" onclick="openAuthModal()">☁️️ Sign In</button>
+      <button class="btn btn-outline" id="auth-status-btn" onclick="openAuthModal()">☁️ Sign In</button>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Dark Mode">
         <svg id="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
         <svg id="sun-icon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -162,16 +160,19 @@
         </div>
         
         <div class="action-group">
+          <input type="file" id="import-file" style="display:none" accept=".json,application/json">
+          <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">↓ Import</button>
+          <button class="btn btn-outline" onclick="exportData()">↑ Export</button>
+          <button class="btn btn-outline" onclick="printRefillList()">🖨️ Print List</button>
           <button class="btn btn-primary" onclick="openAddModal()">+ Add Medicine</button>
         </div>
       </div>
 
       <div class="routine-bar" id="routine-bar">
         <span>1-Click Bulk Routines:</span>
-        <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Morning'}], 'Logged Morning Routine')">🌅 Morning</button>
-        <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Noon'}], 'Logged Noon Routine')">☀️ Noon</button>
-        <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Night'}], 'Logged Night Routine')">🌙 Night</button>
-        <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Weekly'}], 'Logged Weekly Routine')">📆 Weekly</button>
+        <button class="btn btn-outline" onclick="executeDeduction('Morning', 'Logged Morning Routine')">🌅 Morning</button>
+        <button class="btn btn-outline" onclick="executeDeduction('Noon', 'Logged Noon Routine')">☀️ Noon</button>
+        <button class="btn btn-outline" onclick="executeDeduction('Night', 'Logged Night Routine')">🌙 Night</button>
       </div>
 
       <div class="vault-grid" id="med-grid"></div>
@@ -192,20 +193,18 @@
         <form id="auth-email-form" onsubmit="handleEmailAuth(event)">
           <div class="form-group">
             <label>Email Address</label>
-            <input type="email" id="auth-email" required>
+            <input type="email" id="auth-email" required autocomplete="email">
           </div>
           <div class="form-group">
             <label>Password</label>
             <div style="position: relative;">
-              <input type="password" id="auth-password" required minlength="6" style="padding-right: 40px;">
+              <input type="password" id="auth-password" required minlength="6" autocomplete="current-password" style="padding-right: 40px;">
               <button type="button" id="toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-muted); padding: 0;">👁️</button>
             </div>
           </div>
           <button type="submit" class="btn btn-primary" id="auth-submit-btn" style="width: 100%;">Sign In</button>
         </form>
-        <div style="text-align: center; margin-top: 1rem;">
-          <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.85rem; color: var(--primary);">Forgot Password?</a>
-        </div>
+        <div style="text-align: center; margin-top: 1rem;"><a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.85rem; color: var(--primary);">Forgot Password?</a></div>
       </div>
       <div id="logged-in-view" style="display: none; text-align: center;">
         <h3 style="margin-top:0;">Account Synced</h3>
@@ -220,41 +219,67 @@
     <div class="modal-content">
       <span class="close-modal" onclick="closeAddModal()">&times;</span>
       <h2 style="margin-top: 0;">Add to Vault</h2>
+      
       <form id="add-med-form">
         <div class="form-group">
-          <label style="justify-content: space-between;">
-            Medicine Name * 
+          <label style="justify-content: space-between; display: flex; width: 100%;">
+            <span>Medicine Name <span class="required-asterisk">*</span></span>
             <button type="button" class="btn-outline" style="font-size:0.75rem; padding: 2px 8px; border-radius: 4px;" onclick="document.getElementById('ocr-input').click()">📷 Scan Label</button>
           </label>
           <input type="text" id="fm-name" required placeholder="Type or scan label">
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Existing medicines with this exact name will be grouped as a new batch.</div>
           <input type="file" id="ocr-input" accept="image/*" capture="environment" style="display:none;" onchange="handleOCR(event)">
         </div>
+        
         <div style="display: flex; gap: 10px;">
-          <div class="form-group" style="flex: 1;"><label>Amount per Dose *</label><input type="number" id="fm-dosage" required min="0.1" step="0.1" value="1"></div>
           <div class="form-group" style="flex: 1;">
-            <label>Unit *</label>
+            <label>Amount per Dose <span class="required-asterisk">*</span></label>
+            <input type="number" id="fm-dosage" required min="0.1" step="0.1" value="1">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>Unit <span class="required-asterisk">*</span></label>
             <select id="fm-unit"><option value="tablet">Tablets</option><option value="capsule">Capsules</option><option value="ml">ml</option></select>
           </div>
         </div>
+
         <div class="form-group">
-          <label>Routine Schedule *</label>
-          <div style="display: flex; gap: 1rem; margin-bottom: 0.8rem;">
-            <label><input type="radio" name="fm-routine-type" value="scheduled" checked> 🕒 Daily</label>
-            <label><input type="radio" name="fm-routine-type" value="weekly"> 📆 Weekly</label>
-            <label><input type="radio" name="fm-routine-type" value="sos"> 💊 SOS</label>
+          <label>Routine Frequency <span class="required-asterisk">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="fm-frequency" value="daily" checked> 🕒 Daily</label>
+            <label><input type="radio" name="fm-frequency" value="weekly"> 📆 Weekly</label>
+            <label><input type="radio" name="fm-frequency" value="sos"> 💊 SOS</label>
           </div>
-          <div id="scheduled-timings-container" style="display: flex; gap: 1rem;">
-            <label><input type="checkbox" name="fm-timing" value="Morning" checked> Morning</label>
-            <label><input type="checkbox" name="fm-timing" value="Noon"> Noon</label>
-            <label><input type="checkbox" name="fm-timing" value="Night"> Night</label>
+          
+          <div id="scheduled-timings-container" class="checkbox-group" style="padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px;">
+            <label><input type="checkbox" name="fm-timing" value="Morning" checked> 🌅 Morning</label>
+            <label><input type="checkbox" name="fm-timing" value="Noon"> ☀️ Noon</label>
+            <label><input type="checkbox" name="fm-timing" value="Night"> 🌙 Night</label>
           </div>
         </div>
+        
+        <div class="form-group">
+          <label>Food Rule <span class="required-asterisk">*</span></label>
+          <select id="fm-food"><option value="After Food">After Food</option><option value="Before Food">Before Food</option><option value="Independent">Independent</option></select>
+        </div>
+
         <div style="background: var(--gray-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
           <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-            <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>Total Qty *</label><input type="number" id="fm-qty" required min="0.1" step="0.1"></div>
-            <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>Expiry (MM/YY) *</label><input type="month" id="fm-exp" required></div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label>Total Qty <span class="required-asterisk">*</span></label>
+              <!-- Enforcing strict integers for total count to prevent negative/decimals -->
+              <input type="number" id="fm-qty" required min="1" step="1">
+            </div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0;">
+              <label>Expiry <span class="required-asterisk">*</span></label>
+              <input type="date" id="fm-exp" required>
+            </div>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1; margin-bottom: 0;"><label style="font-size: 0.8rem;">Batch (Optional)</label><input type="text" id="fm-batch-num"></div>
+            <div class="form-group" style="flex: 1; margin-bottom: 0;"><label style="font-size: 0.8rem;">Pharmacy (Optional)</label><input type="text" id="fm-pharmacy"></div>
           </div>
         </div>
+        
         <button type="submit" class="btn btn-primary" style="width: 100%;">Save to Vault</button>
       </form>
     </div>
@@ -276,6 +301,7 @@
     let auth = null;
     let firestore = null;
     let currentUser = null;
+    let dbUnsubscribe = null; // Used for real-time listener
 
     if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
       firebase.initializeApp(firebaseConfig);
@@ -290,28 +316,19 @@
 
     function getFriendlyError(errorCode) {
       switch (errorCode) {
-        case 'auth/invalid-credential':
-        case 'auth/wrong-password':
-        case 'auth/user-not-found':
-          return "Incorrect email or password.";
-        case 'auth/email-already-in-use':
-          return "This email is already registered.";
-        case 'auth/weak-password':
-          return "Password should be at least 6 characters.";
-        case 'auth/invalid-email':
-          return "Please enter a valid email address.";
-        default:
-          return "Authentication failed. Please try again.";
+        case 'auth/invalid-credential': case 'auth/wrong-password': case 'auth/user-not-found': return "Incorrect email or password.";
+        case 'auth/email-already-in-use': return "This email is already registered.";
+        case 'auth/weak-password': return "Password should be at least 6 characters.";
+        case 'auth/invalid-email': return "Please enter a valid email address.";
+        default: return "Authentication failed. Please try again.";
       }
     }
 
+    // Push local updates to the cloud
     function saveDB() {
       if (currentUser && firestore) {
         const safeVaults = {};
-        for (let key in db) {
-          if (key && key.trim() !== "") safeVaults[key] = db[key];
-        }
-        
+        for (let key in db) { if (key && key.trim() !== "") safeVaults[key] = db[key]; }
         firestore.collection('users').doc(currentUser.uid).set({
           profiles: profileList.filter(p => p && p.trim() !== ""),
           vaults: safeVaults,
@@ -320,6 +337,7 @@
       }
     }
 
+    // --- REAL-TIME SYNC ENGINE ---
     if (auth) {
       auth.onAuthStateChanged(user => {
         currentUser = user;
@@ -335,12 +353,27 @@
           landingView.style.display = 'none';
           appView.style.display = 'block';
 
-          firestore.collection('users').doc(user.uid).get().then(doc => {
+          // Live Listener instead of a one-time Get
+          dbUnsubscribe = firestore.collection('users').doc(user.uid).onSnapshot(doc => {
             if (doc.exists) {
               const data = doc.data();
               if (data.profiles && data.profiles.length > 0) profileList = data.profiles;
-              if (data.vaults && Object.keys(data.vaults).length > 0) db = data.vaults;
-              currentProfile = profileList[0] || "My Vault";
+              if (data.vaults && Object.keys(data.vaults).length > 0) {
+                
+                // Ensure legacy data is migrated to the new Frequency system
+                Object.keys(data.vaults).forEach(prof => {
+                  data.vaults[prof].forEach(med => {
+                    if (!med.frequency) {
+                      if (med.timing.includes("SOS")) med.frequency = "sos";
+                      else if (med.timing.includes("Weekly")) med.frequency = "weekly";
+                      else med.frequency = "daily";
+                      med.timing = med.timing.filter(t => t !== "SOS" && t !== "Weekly");
+                    }
+                  });
+                });
+                db = data.vaults;
+              }
+              if (!profileList.includes(currentProfile)) currentProfile = profileList[0];
             } else {
               db = { "My Vault": [] }; 
               profileList = ["My Vault"];
@@ -349,23 +382,16 @@
             }
             renderTabs();
             renderCards();
-          }).catch(err => {
-            console.error("Cloud pull error:", err);
-            db = { "My Vault": [] };
-            profileList = ["My Vault"];
-            currentProfile = "My Vault";
-            renderTabs();
-            renderCards();
-          });
+          }, err => console.error("Sync listener error:", err));
+
         } else {
+          if (dbUnsubscribe) dbUnsubscribe();
           statusBtn.innerText = "☁️ Sign In";
           document.getElementById('logged-out-view').style.display = 'block';
           document.getElementById('logged-in-view').style.display = 'none';
           landingView.style.display = 'block';
           appView.style.display = 'none';
-          db = {};
-          profileList = [];
-          currentProfile = "";
+          db = {}; profileList = []; currentProfile = "";
         }
       });
     }
@@ -398,8 +424,7 @@
         auth.signInWithEmailAndPassword(email, pass).then(() => closeAuthModal()).catch(err => showToast(getFriendlyError(err.code), "warning"));
       } else {
         auth.createUserWithEmailAndPassword(email, pass).then(() => {
-          showToast("Account created successfully!", "success");
-          closeAuthModal();
+          showToast("Account created successfully!", "success"); closeAuthModal();
         }).catch(err => showToast(getFriendlyError(err.code), "warning"));
       }
     }
@@ -408,18 +433,10 @@
       e.preventDefault();
       if (!auth) { showToast("Please configure Firebase keys.", "warning"); return; }
       const email = document.getElementById('auth-email').value;
-      if (!email) {
-        showToast("Please enter your email address first.", "warning");
-        return;
-      }
-      auth.sendPasswordResetEmail(email)
-        .then(() => showToast("Password reset email sent! Check your inbox.", "success"))
-        .catch(err => showToast(getFriendlyError(err.code), "warning"));
+      if (!email) { showToast("Please enter your email address first.", "warning"); return; }
+      auth.sendPasswordResetEmail(email).then(() => showToast("Password reset email sent!", "success")).catch(err => showToast(getFriendlyError(err.code), "warning"));
     }
-
-    function handleSignOut() {
-      if (auth) auth.signOut().then(() => closeAuthModal());
-    }
+    function handleSignOut() { if (auth) auth.signOut().then(() => closeAuthModal()); }
 
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
@@ -430,38 +447,95 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
-    // --- PROFILES ---
+    // --- PROFILES & ARCHIVE ---
+    function sanitize(str) { return str.replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
     function renderTabs() {
       const container = document.getElementById('profile-tabs-container');
       container.innerHTML = '';
       profileList.forEach(prof => {
         const isActive = prof === currentProfile ? 'active' : '';
-        container.innerHTML += `<div class="tab ${isActive}" onclick="switchProfile('${prof}')"><span>${prof}</span></div>`;
+        const tab = document.createElement('div');
+        tab.className = `tab ${isActive}`;
+        tab.onclick = () => switchProfile(prof);
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.innerText = prof;
+        tab.appendChild(nameSpan);
+
+        if (isActive) {
+          const editBtn = document.createElement('button');
+          editBtn.className = 'profile-action-btn'; editBtn.innerHTML = '✎';
+          editBtn.onclick = (e) => { e.stopPropagation(); renameProfile(prof); };
+          tab.appendChild(editBtn);
+
+          if (profileList.length > 1) {
+            const delBtn = document.createElement('button');
+            delBtn.className = 'profile-action-btn delete'; delBtn.innerHTML = '✕';
+            delBtn.onclick = (e) => { e.stopPropagation(); deleteProfile(prof); };
+            tab.appendChild(delBtn);
+          }
+        }
+        container.appendChild(tab);
       });
-      if (profileList.length < 5) container.innerHTML += `<button class="add-profile-btn" onclick="addNewProfile()">+ Add Person</button>`;
+      if (profileList.length < 5) {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-profile-btn'; addBtn.innerText = '+ Add Person';
+        addBtn.onclick = addNewProfile;
+        container.appendChild(addBtn);
+      }
     }
 
     function switchProfile(profileName) {
       currentProfile = profileName;
       if (!db[currentProfile]) db[currentProfile] = [];
-      renderTabs();
-      renderCards();
+      document.getElementById("view-mode-dropdown").value = "active";
+      renderTabs(); renderCards();
     }
 
     function addNewProfile() {
       const newName = prompt("Profile Name:");
-      if (!newName || !newName.trim() || profileList.includes(newName.trim())) return;
-      const cleanName = newName.trim();
+      if (!newName || !newName.trim()) return;
+      const cleanName = sanitize(newName.trim());
+      if (profileList.includes(cleanName)) { showToast("Name exists.", "warning"); return; }
       profileList.push(cleanName);
       db[cleanName] = [];
-      saveDB();
-      switchProfile(cleanName);
+      saveDB(); switchProfile(cleanName);
+    }
+
+    function renameProfile(oldName) {
+      const newName = prompt("Rename profile to:", oldName);
+      if (!newName || !newName.trim() || newName.trim() === oldName) return;
+      const cleanName = sanitize(newName.trim());
+      if (profileList.includes(cleanName)) { showToast("Name exists.", "warning"); return; }
+      
+      const index = profileList.indexOf(oldName);
+      profileList[index] = cleanName;
+      db[cleanName] = db[oldName];
+      delete db[oldName];
+      saveDB(); currentProfile = cleanName; renderTabs();
+    }
+
+    function deleteProfile(profileName) {
+      if (profileList.length <= 1 || !confirm(`Delete '${profileName}'? All records will be lost.`)) return;
+      profileList.splice(profileList.indexOf(profileName), 1);
+      delete db[profileName];
+      saveDB(); switchProfile(profileList[0]);
+    }
+
+    function toggleArchive(medId, status) {
+      let med = db[currentProfile].find(m => m.id === medId);
+      if(med) {
+        med.archived = status;
+        saveDB(); renderCards();
+        showToast(status ? `Sent to Archive.` : `Restored to Vault.`, "success");
+      }
     }
 
     // --- FORM LOGIC ---
-    document.querySelectorAll('input[name="fm-routine-type"]').forEach(radio => {
+    document.querySelectorAll('input[name="fm-frequency"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
-        document.getElementById('scheduled-timings-container').style.display = e.target.value === 'scheduled' ? 'flex' : 'none';
+        document.getElementById('scheduled-timings-container').style.display = e.target.value === 'sos' ? 'none' : 'flex';
       });
     });
 
@@ -470,19 +544,16 @@
       let activeInventory = db[currentProfile] || [];
       activeInventory.forEach(med => {
         let totalQty = med.batches.reduce((sum, b) => sum + b.qty, 0);
-        let isSOS = med.timing.includes("SOS");
-        let isWeekly = med.timing.includes("Weekly");
         
-        if (isSOS) {
+        if (med.frequency === 'sos') {
           med.daysLeft = Infinity;
           med.dateStr = "N/A (SOS)";
         } else {
-          let dailyConsumption = 0;
-          if (isWeekly) {
-            dailyConsumption = med.dosage / 7;
-          } else {
-            let intakeCount = med.timing.length || 1;
-            dailyConsumption = med.dosage * intakeCount;
+          let intakeCount = med.timing.length || 1;
+          let dailyConsumption = med.dosage * intakeCount;
+          
+          if (med.frequency === 'weekly') {
+            dailyConsumption = dailyConsumption / 7; // Spread weekly dose across 7 days
           }
           
           med.daysLeft = dailyConsumption > 0 ? Math.floor(totalQty / dailyConsumption) : 0;
@@ -494,27 +565,6 @@
       return activeInventory;
     }
 
-    // --- ICS CALENDAR EXPORT ---
-    function generateICS(name, timings) {
-      const start = new Date();
-      start.setHours(start.getHours() + 1);
-      const isoStart = start.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-      
-      const isWeekly = timings.includes('Weekly');
-      const rule = isWeekly ? 'FREQ=WEEKLY' : 'FREQ=DAILY';
-      
-      const icsStr = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:${isoStart}\nSUMMARY:Take ${name}\nDESCRIPTION:Time for your dose of ${name} (${timings.join(', ')}).\nRRULE:${rule}\nBEGIN:VALARM\nACTION:DISPLAY\nDESCRIPTION:Take ${name}\nTRIGGER:-PT15M\nEND:VALARM\nEND:VEVENT\nEND:VCALENDAR`;
-      
-      const blob = new Blob([icsStr], { type: 'text/calendar' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `MediVault_${name}_Reminder.ics`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast("Reminder file downloaded!", "success");
-    }
-
     // --- CARD RENDERER ---
     function renderCards() {
       const grid = document.getElementById("med-grid");
@@ -522,7 +572,9 @@
       const searchTerm = document.getElementById("search-input").value.toLowerCase();
       const sortType = document.getElementById("sort-dropdown").value;
       
+      document.getElementById("routine-bar").style.display = (viewMode === "archived") ? "none" : "flex";
       grid.innerHTML = "";
+      
       let inventory = getCalculatedInventory().filter(m => (viewMode === "archived" ? m.archived : !m.archived) && m.name.toLowerCase().includes(searchTerm));
 
       if (sortType === "least") inventory.sort((a, b) => a.daysLeft - b.daysLeft);
@@ -530,7 +582,8 @@
       if (sortType === "az") inventory.sort((a, b) => a.name.localeCompare(b.name));
 
       inventory.forEach(med => {
-        let isSOS = med.daysLeft === Infinity;
+        let isSOS = med.frequency === 'sos';
+        let isWeekly = med.frequency === 'weekly';
         let totalQty = med.batches.reduce((sum, b) => sum + b.qty, 0);
         let outOfStock = totalQty < med.dosage;
 
@@ -541,30 +594,59 @@
         let percent = isSOS ? 100 : Math.min(100, Math.max(0, (med.daysLeft / 30) * 100));
         let barColor = statusClass.includes("danger") ? "var(--danger)" : (statusClass.includes("warning") ? "var(--warning)" : "var(--success)");
 
+        let batchesHtml = med.batches.map(b => {
+          let extra = [];
+          if (b.batchNum) extra.push(`ID: ${b.batchNum}`);
+          if (b.pharmacy) extra.push(b.pharmacy);
+          let extraHtml = extra.length > 0 ? `<div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">${extra.join(' • ')}</div>` : '';
+          return `
+          <div class="batch-item" style="flex-direction: column; align-items: stretch;">
+            <div style="display: flex; justify-content: space-between;">
+              <span><strong>${b.qty}</strong> ${med.unit} left</span>
+              <span style="color: var(--text-muted);">Exp: ${b.exp}</span>
+            </div>
+            ${extraHtml}
+          </div>`;
+        }).join('');
+
+        const timingIcons = { "Morning": "🌅 Morning", "Noon": "☀️ Noon", "Night": "🌙 Night" };
+        let displayTimings = isSOS ? "💊 SOS" : (isWeekly ? "📆 Weekly: " : "") + med.timing.map(t => timingIcons[t] || t).join(", ");
+        
+        let primaryActionBtn = med.archived 
+          ? `<button class="btn btn-outline" style="flex:2;" onclick="toggleArchive(${med.id}, false)">🔙 Restore Active</button>`
+          : `<button class="btn btn-primary" style="flex:2;" onclick='executeDeduction("${med.timing.join(',')}", "Logged ${med.dosage} ${med.unit} of ${med.name}", ${med.id})' ${outOfStock ? 'disabled style="opacity:0.5;"' : ''}>✓ Take ${med.dosage} ${med.unit}</button>
+             <button class="btn btn-outline" style="flex:1;" title="Archive" onclick="toggleArchive(${med.id}, true)">📦</button>`;
+
         grid.innerHTML += `
           <div class="med-card ${statusClass}">
             <div class="med-header">
               <h3 class="med-name">${med.name}</h3>
-              <div style="display: flex; gap: 6px;"><span class="timing-badge ${isSOS ? 'sos' : ''}">${med.timing.join(", ")}</span></div>
+              <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                <span class="timing-badge ${isSOS ? 'sos' : ''}">${displayTimings}</span>
+                <span class="food-badge">${med.food}</span>
+              </div>
             </div>
             <div class="status-container">
               <div class="days-left">${isSOS ? 'SOS' : med.daysLeft + ' Days'}</div>
-              <div class="run-out-date">${isSOS ? 'As Needed' : 'Depletes ' + med.dateStr}</div>
+              <div class="run-out-date">${isSOS ? 'As Needed' : (med.archived ? 'Archived' : 'Depletes ' + med.dateStr)}</div>
               <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%; background-color: ${barColor};"></div></div>
             </div>
-            <div class="card-actions">
-              <button class="btn btn-primary" style="flex:4;" onclick='executeDeduction([{"id": ${med.id}}], "Logged ${med.dosage} ${med.unit} of ${med.name}")' ${outOfStock ? 'disabled' : ''}>✓ Take ${med.dosage} ${med.unit}</button>
-              <button class="btn btn-outline" style="flex:1;" title="Export Calendar Reminder" onclick='generateICS("${med.name}", ${JSON.stringify(med.timing)})'>📅</button>
-            </div>
+            <div style="flex-grow: 1; margin-top: 1rem;">${batchesHtml || '<div class="batch-item" style="color:var(--danger)">Out of Stock</div>'}</div>
+            <div class="card-actions">${primaryActionBtn}</div>
           </div>`;
       });
     }
 
-    function executeDeduction(filters, message) {
-      let targets = (db[currentProfile] || []).filter(med => !med.archived && filters.every(f => {
-        let key = Object.keys(f)[0];
-        return key === 'timing' ? med.timing.includes(f[key]) : med[key] === f[key];
-      }));
+    function executeDeduction(targetTimingStr, message, exactId = null) {
+      let targets = (db[currentProfile] || []).filter(med => {
+        if (med.archived) return false;
+        if (exactId) return med.id === exactId;
+        // Bulk routine check
+        return med.timing.includes(targetTimingStr) && med.frequency !== 'sos';
+      });
+
+      if (targets.length === 0) { showToast("No active medicines match this routine.", "warning"); return; }
+
       targets.forEach(med => {
         let rem = med.dosage;
         for (let i = 0; i < med.batches.length; i++) {
@@ -574,14 +656,18 @@
         }
         med.batches = med.batches.filter(b => b.qty > 0);
       });
-      saveDB(); renderCards(); showToast(message, "success");
+      saveDB(); showToast(message, "success");
     }
 
-    // --- ADD MEDICINE WITH OCR & MONTH VALIDATION ---
+    // --- ADD MEDICINE WITH BATCHING & VALIDATION ---
     const addModal = document.getElementById("add-modal");
-    function openAddModal() { addModal.style.display = "flex"; }
+    function openAddModal() { 
+      document.getElementById('fm-exp').min = new Date().toISOString().split('T')[0]; 
+      addModal.style.display = "flex"; 
+    }
     function closeAddModal() { addModal.style.display = "none"; document.getElementById("add-med-form").reset(); }
     
+    // Stabilized OCR
     async function handleOCR(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -589,60 +675,111 @@
       try {
         const result = await Tesseract.recognize(file, 'eng');
         const text = result.data.text.trim();
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3 && !/^\d+$/.test(l));
+        // Ignore lines that are pure numbers, short, or dates
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 4 && !/^\d+$/.test(l) && !l.includes('/'));
         if (lines.length > 0) {
           document.getElementById('fm-name').value = lines[0];
           showToast("Scan complete!", "success");
         } else {
-          showToast("Could not read clearly. Please type name.", "warning");
+          showToast("Could not read cleanly. Please type name.", "warning");
         }
       } catch (err) {
-        showToast("OCR processing failed. Please type manually.", "danger");
+        showToast("OCR failed. Please type manually.", "danger");
       }
     }
 
     document.getElementById("add-med-form").addEventListener("submit", (e) => {
       e.preventDefault();
-      const routineType = document.querySelector('input[name="fm-routine-type"]:checked').value;
       
+      let rawQty = parseInt(document.getElementById("fm-qty").value, 10);
+      if (isNaN(rawQty) || rawQty <= 0) { showToast("Total Quantity must be a positive number.", "warning"); return; }
+      
+      const frequencyType = document.querySelector('input[name="fm-frequency"]:checked').value;
       let timings = [];
-      if (routineType === 'sos') timings = ["SOS"];
-      else if (routineType === 'weekly') timings = ["Weekly"];
-      else timings = Array.from(document.querySelectorAll('input[name="fm-timing"]:checked')).map(cb => cb.value);
-      
-      const expInput = document.getElementById("fm-exp").value; 
-      const expDate = new Date(expInput + "-01");
-      expDate.setMonth(expDate.getMonth() + 1);
-      expDate.setDate(0); 
+      if (frequencyType === 'sos') { timings = ["SOS"]; } 
+      else {
+        timings = Array.from(document.querySelectorAll('input[name="fm-timing"]:checked')).map(cb => cb.value);
+        if (timings.length === 0) { showToast("Please select at least one time.", "warning"); return; }
+      }
 
-      const newBatch = { qty: parseFloat(document.getElementById("fm-qty").value), exp: expDate.toISOString().split('T')[0] };
+      const nameVal = sanitize(document.getElementById("fm-name").value.trim());
+      const newBatch = { 
+        qty: rawQty, 
+        exp: document.getElementById("fm-exp").value,
+        batchNum: sanitize(document.getElementById("fm-batch-num").value.trim()),
+        pharmacy: sanitize(document.getElementById("fm-pharmacy").value.trim())
+      };
       
       if (!db[currentProfile]) db[currentProfile] = [];
-      db[currentProfile].push({
-        id: Date.now(),
-        name: document.getElementById("fm-name").value.trim(),
-        dosage: parseFloat(document.getElementById("fm-dosage").value),
-        unit: document.getElementById("fm-unit").value,
-        timing: timings,
-        archived: false,
-        batches: [newBatch]
-      });
       
-      saveDB(); renderCards(); closeAddModal(); showToast("Saved to Vault", "success");
+      // Smart Batch Grouping
+      let existingMed = db[currentProfile].find(m => m.name.toLowerCase() === nameVal.toLowerCase() && !m.archived);
+      
+      if (existingMed) {
+        existingMed.batches.push(newBatch);
+        existingMed.batches.sort((a, b) => new Date(a.exp) - new Date(b.exp));
+        showToast(`Added batch to existing ${existingMed.name}.`, "success");
+      } else {
+        db[currentProfile].push({
+          id: Date.now(),
+          name: nameVal,
+          dosage: parseFloat(document.getElementById("fm-dosage").value),
+          unit: document.getElementById("fm-unit").value,
+          frequency: frequencyType,
+          timing: timings,
+          food: document.getElementById("fm-food").value,
+          archived: false,
+          batches: [newBatch]
+        });
+        showToast("Saved to Vault", "success");
+      }
+      
+      saveDB(); closeAddModal(); document.getElementById("view-mode-dropdown").value = "active";
     });
 
+    // --- UTILITIES (PRINT/EXPORT/IMPORT) ---
+    function printRefillList() {
+      let inventory = getCalculatedInventory().filter(m => m.daysLeft <= 14 && !m.archived);
+      if(inventory.length === 0) { showToast("No active medicines need refilling right now.", "success"); return; }
+
+      let printWin = window.open('', '_blank');
+      let html = `<html><head><style>body{font-family:sans-serif;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:8px;} th{background:#eee;} .danger{color:red;font-weight:bold;}</style></head><body>
+      <h2>Refill List for ${currentProfile}</h2><table><tr><th>Medicine Name</th><th>Status</th><th>Expiring Batch</th></tr>`;
+      inventory.forEach(m => {
+        html += `<tr><td><strong>${m.name}</strong></td><td class="${m.daysLeft<=3?'danger':''}">${m.daysLeft} days left</td><td>${m.batches[0]?m.batches[0].exp:'N/A'}</td></tr>`;
+      });
+      html += `</table></body></html>`;
+      printWin.document.write(html); printWin.document.close(); setTimeout(() => printWin.print(), 250);
+    }
+
+    function exportData() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db[currentProfile] || []));
+      const link = document.createElement('a'); link.href = dataStr; link.download = `medivault_${currentProfile}.json`;
+      document.body.appendChild(link); link.click(); link.remove();
+    }
+
+    document.getElementById('import-file').addEventListener('change', function(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          db[currentProfile] = JSON.parse(event.target.result);
+          saveDB(); showToast(`Backup restored to ${currentProfile}.`, "success");
+        } catch(err) { showToast("Invalid backup file.", "warning"); }
+      };
+      reader.readAsText(file); e.target.value = ''; 
+    });
+
+    // Event Listeners
     document.getElementById('theme-toggle').addEventListener('click', () => {
-      const el = document.documentElement;
-      const next = el.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      const el = document.documentElement; const next = el.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
       el.setAttribute('data-theme', next);
       document.getElementById('moon-icon').style.display = next === 'dark' ? 'none' : 'block';
       document.getElementById('sun-icon').style.display = next === 'dark' ? 'block' : 'none';
     });
-
     document.getElementById("search-input").addEventListener("input", renderCards);
     document.getElementById("sort-dropdown").addEventListener("change", renderCards);
     document.getElementById("view-mode-dropdown").addEventListener("change", renderCards);
-    
     document.getElementById('toggle-password').addEventListener('click', function() {
       const passInput = document.getElementById('auth-password');
       if (passInput.type === 'password') { passInput.type = 'text'; this.innerText = '🙈'; } 
