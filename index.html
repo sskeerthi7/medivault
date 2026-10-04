@@ -69,6 +69,12 @@
     .routine-bar { display: flex; gap: 1rem; padding: 1rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap;}
     .routine-bar span { font-weight: 600; color: var(--text-muted); margin-right: auto;}
     
+    .logs-panel { margin-top: 2rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 1.5rem; display: none; box-shadow: 0 2px 8px var(--shadow);}
+    .logs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-weight: 700; color: var(--text); font-size: 1.1rem;}
+    .log-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: var(--gray-bg); border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.9rem; border: 1px solid var(--border); }
+    .log-undo-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;}
+    .log-undo-btn:hover { background: var(--surface); color: var(--primary); border-color: var(--primary); }
+
     .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
     
     .med-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px var(--shadow); display: flex; flex-direction: column; transition: transform 0.2s;}
@@ -176,6 +182,16 @@
       </div>
 
       <div class="vault-grid" id="med-grid"></div>
+
+      <!-- RECENT LOGS UI (Undo Functionality Restored) -->
+      <div class="logs-panel" id="logs-panel">
+        <div class="logs-header">
+          🕒 Recent Session Activity
+          <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">Quick-undo accidental logs</span>
+        </div>
+        <div id="logs-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
     </div>
   </main>
 
@@ -285,12 +301,58 @@
     </div>
   </div>
 
+  <!-- EDIT MEDICINE MODAL -->
+  <div id="edit-modal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeEditModal()">&times;</span>
+      <h2 style="margin-top: 0;">Edit Medicine</h2>
+      
+      <form id="edit-med-form">
+        <div class="form-group">
+          <label>Medicine Name <span class="required-asterisk">*</span></label>
+          <input type="text" id="edit-fm-name" required>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+          <div class="form-group" style="flex: 1;">
+            <label>Amount per Dose <span class="required-asterisk">*</span></label>
+            <input type="number" id="edit-fm-dosage" required min="0.1" step="0.1">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label>Unit <span class="required-asterisk">*</span></label>
+            <select id="edit-fm-unit"><option value="tablet">Tablets</option><option value="capsule">Capsules</option><option value="ml">ml</option></select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Routine Frequency <span class="required-asterisk">*</span></label>
+          <div class="radio-group">
+            <label><input type="radio" name="edit-fm-frequency" value="daily"> 🕒 Daily</label>
+            <label><input type="radio" name="edit-fm-frequency" value="weekly"> 📆 Weekly</label>
+            <label><input type="radio" name="edit-fm-frequency" value="sos"> 💊 SOS</label>
+          </div>
+          
+          <div id="edit-scheduled-timings-container" class="checkbox-group" style="padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px;">
+            <label><input type="checkbox" name="edit-fm-timing" value="Morning"> 🌅 Morning</label>
+            <label><input type="checkbox" name="edit-fm-timing" value="Noon"> ☀️ Noon</label>
+            <label><input type="checkbox" name="edit-fm-timing" value="Night"> 🌙 Night</label>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 1rem;">
+          <button type="submit" class="btn btn-primary" style="flex: 2;">Save Changes</button>
+          <button type="button" class="btn btn-outline" style="flex: 1; border-color: var(--danger); color: var(--danger);" onclick="deleteMedicine()">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div class="toast-container" id="toast-container"></div>
 
   <script>
     // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
-      apiKey: "AIzaSyCR1mOzBTRPX6Q3Dz2auqVU9zF5Pl3Uby4",
+      apiKey: "YOUR_API_KEY",
       authDomain: "medivault-by-ssk.firebaseapp.com",
       projectId: "medivault-by-ssk",
       storageBucket: "medivault-by-ssk.firebasestorage.app",
@@ -301,7 +363,7 @@
     let auth = null;
     let firestore = null;
     let currentUser = null;
-    let dbUnsubscribe = null; // Used for real-time listener
+    let dbUnsubscribe = null; 
 
     if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
       firebase.initializeApp(firebaseConfig);
@@ -313,6 +375,8 @@
     let currentProfile = "My Vault";
     let db = { "My Vault": [] };
     let currentAuthMode = 'signin';
+    let editingMedId = null;
+    let sessionLogs = []; // State for undo feature
 
     function getFriendlyError(errorCode) {
       switch (errorCode) {
@@ -324,7 +388,6 @@
       }
     }
 
-    // Push local updates to the cloud
     function saveDB() {
       if (currentUser && firestore) {
         const safeVaults = {};
@@ -337,7 +400,6 @@
       }
     }
 
-    // --- REAL-TIME SYNC ENGINE ---
     if (auth) {
       auth.onAuthStateChanged(user => {
         currentUser = user;
@@ -353,14 +415,11 @@
           landingView.style.display = 'none';
           appView.style.display = 'block';
 
-          // Live Listener instead of a one-time Get
           dbUnsubscribe = firestore.collection('users').doc(user.uid).onSnapshot(doc => {
             if (doc.exists) {
               const data = doc.data();
               if (data.profiles && data.profiles.length > 0) profileList = data.profiles;
               if (data.vaults && Object.keys(data.vaults).length > 0) {
-                
-                // Ensure legacy data is migrated to the new Frequency system
                 Object.keys(data.vaults).forEach(prof => {
                   data.vaults[prof].forEach(med => {
                     if (!med.frequency) {
@@ -382,6 +441,7 @@
             }
             renderTabs();
             renderCards();
+            renderLogs();
           }, err => console.error("Sync listener error:", err));
 
         } else {
@@ -391,7 +451,7 @@
           document.getElementById('logged-in-view').style.display = 'none';
           landingView.style.display = 'block';
           appView.style.display = 'none';
-          db = {}; profileList = []; currentProfile = "";
+          db = {}; profileList = []; currentProfile = ""; sessionLogs = [];
         }
       });
     }
@@ -447,7 +507,6 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
-    // --- PROFILES & ARCHIVE ---
     function sanitize(str) { return str.replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
     function renderTabs() {
@@ -488,9 +547,10 @@
 
     function switchProfile(profileName) {
       currentProfile = profileName;
+      sessionLogs = [];
       if (!db[currentProfile]) db[currentProfile] = [];
       document.getElementById("view-mode-dropdown").value = "active";
-      renderTabs(); renderCards();
+      renderTabs(); renderCards(); renderLogs();
     }
 
     function addNewProfile() {
@@ -527,19 +587,17 @@
       let med = db[currentProfile].find(m => m.id === medId);
       if(med) {
         med.archived = status;
-        saveDB(); renderCards();
+        saveDB();
         showToast(status ? `Sent to Archive.` : `Restored to Vault.`, "success");
       }
     }
 
-    // --- FORM LOGIC ---
     document.querySelectorAll('input[name="fm-frequency"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
         document.getElementById('scheduled-timings-container').style.display = e.target.value === 'sos' ? 'none' : 'flex';
       });
     });
 
-    // --- INVENTORY CALCULATION ---
     function getCalculatedInventory() {
       let activeInventory = db[currentProfile] || [];
       activeInventory.forEach(med => {
@@ -551,10 +609,7 @@
         } else {
           let intakeCount = med.timing.length || 1;
           let dailyConsumption = med.dosage * intakeCount;
-          
-          if (med.frequency === 'weekly') {
-            dailyConsumption = dailyConsumption / 7; // Spread weekly dose across 7 days
-          }
+          if (med.frequency === 'weekly') dailyConsumption = dailyConsumption / 7;
           
           med.daysLeft = dailyConsumption > 0 ? Math.floor(totalQty / dailyConsumption) : 0;
           let depletion = new Date();
@@ -565,7 +620,35 @@
       return activeInventory;
     }
 
-    // --- CARD RENDERER ---
+    // --- UNDO ENGINE ---
+    function renderLogs() {
+      const panel = document.getElementById("logs-panel");
+      const container = document.getElementById("logs-container");
+      if (sessionLogs.length === 0) { panel.style.display = 'none'; return; }
+      
+      panel.style.display = 'block';
+      container.innerHTML = sessionLogs.map(log => `
+        <div class="log-item">
+          <div><strong>${log.message}</strong> <span style="color:var(--text-muted); margin-left:8px;">${log.time}</span></div>
+          <button class="log-undo-btn" onclick="undoLog(${log.id})">↺ Undo</button>
+        </div>
+      `).join('');
+    }
+
+    function undoLog(logId) {
+      const logIndex = sessionLogs.findIndex(l => l.id === logId);
+      if (logIndex === -1) return;
+
+      const log = sessionLogs[logIndex];
+      log.snapshot.forEach(snap => {
+        let med = db[currentProfile].find(m => m.id === snap.id);
+        if (med) med.batches = snap.oldBatches;
+      });
+
+      sessionLogs.splice(logIndex, 1);
+      saveDB(); showToast("Action successfully undone.", "success");
+    }
+
     function renderCards() {
       const grid = document.getElementById("med-grid");
       const viewMode = document.getElementById("view-mode-dropdown").value;
@@ -614,8 +697,9 @@
         
         let primaryActionBtn = med.archived 
           ? `<button class="btn btn-outline" style="flex:2;" onclick="toggleArchive(${med.id}, false)">🔙 Restore Active</button>`
-          : `<button class="btn btn-primary" style="flex:2;" onclick='executeDeduction("${med.timing.join(',')}", "Logged ${med.dosage} ${med.unit} of ${med.name}", ${med.id})' ${outOfStock ? 'disabled style="opacity:0.5;"' : ''}>✓ Take ${med.dosage} ${med.unit}</button>
-             <button class="btn btn-outline" style="flex:1;" title="Archive" onclick="toggleArchive(${med.id}, true)">📦</button>`;
+          : `<button class="btn btn-primary" style="flex:2;" onclick='executeDeduction("${med.timing.join(',')}", "Logged ${med.dosage} ${med.unit} of ${med.name}", ${med.id})' ${outOfStock ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>✓ Take ${med.dosage} ${med.unit}</button>
+             <button class="btn btn-outline" style="flex:1;" title="Archive" onclick="toggleArchive(${med.id}, true)">📦</button>
+             <button class="btn btn-outline" style="flex:1;" title="Edit" onclick="openEditModal(${med.id})">✏️</button>`;
 
         grid.innerHTML += `
           <div class="med-card ${statusClass}">
@@ -641,33 +725,100 @@
       let targets = (db[currentProfile] || []).filter(med => {
         if (med.archived) return false;
         if (exactId) return med.id === exactId;
-        // Bulk routine check
         return med.timing.includes(targetTimingStr) && med.frequency !== 'sos';
       });
 
       if (targets.length === 0) { showToast("No active medicines match this routine.", "warning"); return; }
 
+      let snapshot = targets.map(med => ({ id: med.id, oldBatches: JSON.parse(JSON.stringify(med.batches)) }));
+      let deductedCount = 0;
+
       targets.forEach(med => {
-        let rem = med.dosage;
+        let remainingToDeduct = med.dosage;
+        let originalTotal = med.batches.reduce((sum, b) => sum + b.qty, 0);
+        if (originalTotal < remainingToDeduct) return; 
+        
+        deductedCount++;
         for (let i = 0; i < med.batches.length; i++) {
-          if (rem <= 0) break;
-          if (med.batches[i].qty >= rem) { med.batches[i].qty -= rem; rem = 0; }
-          else { rem -= med.batches[i].qty; med.batches[i].qty = 0; }
+          if (remainingToDeduct <= 0) break;
+          if (med.batches[i].qty >= remainingToDeduct) { med.batches[i].qty -= remainingToDeduct; remainingToDeduct = 0; }
+          else { remainingToDeduct -= med.batches[i].qty; med.batches[i].qty = 0; }
         }
         med.batches = med.batches.filter(b => b.qty > 0);
       });
+
+      if (deductedCount === 0) { showToast("Out of stock! Cannot log dose.", "warning"); return; }
+
+      sessionLogs.unshift({ id: Date.now(), message: message, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}), snapshot: snapshot });
+      if(sessionLogs.length > 5) sessionLogs.pop();
+
       saveDB(); showToast(message, "success");
     }
 
-    // --- ADD MEDICINE WITH BATCHING & VALIDATION ---
+    // --- ADD/EDIT MODAL LOGIC ---
     const addModal = document.getElementById("add-modal");
+    const editModal = document.getElementById("edit-modal");
+    
     function openAddModal() { 
       document.getElementById('fm-exp').min = new Date().toISOString().split('T')[0]; 
       addModal.style.display = "flex"; 
     }
     function closeAddModal() { addModal.style.display = "none"; document.getElementById("add-med-form").reset(); }
     
-    // Stabilized OCR
+    function openEditModal(medId) {
+      let med = db[currentProfile].find(m => m.id === medId);
+      if (!med) return;
+      editingMedId = medId;
+      
+      document.getElementById('edit-fm-name').value = med.name;
+      document.getElementById('edit-fm-dosage').value = med.dosage;
+      document.getElementById('edit-fm-unit').value = med.unit;
+      document.querySelector(`input[name="edit-fm-frequency"][value="${med.frequency}"]`).checked = true;
+      
+      const timingsContainer = document.getElementById('edit-scheduled-timings-container');
+      timingsContainer.style.display = (med.frequency === 'sos') ? 'none' : 'flex';
+      
+      document.querySelectorAll('input[name="edit-fm-timing"]').forEach(cb => {
+        cb.checked = med.timing.includes(cb.value);
+      });
+      
+      editModal.style.display = "flex";
+    }
+
+    function closeEditModal() { editModal.style.display = "none"; document.getElementById("edit-med-form").reset(); editingMedId = null;}
+
+    function deleteMedicine() {
+      if (!editingMedId || !confirm("Permanently delete this medicine and all its batches? This cannot be undone.")) return;
+      db[currentProfile] = db[currentProfile].filter(m => m.id !== editingMedId);
+      saveDB(); closeEditModal(); showToast("Medicine permanently deleted.", "success");
+    }
+
+    document.querySelectorAll('input[name="edit-fm-frequency"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        document.getElementById('edit-scheduled-timings-container').style.display = e.target.value === 'sos' ? 'none' : 'flex';
+      });
+    });
+
+    document.getElementById("edit-med-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      let med = db[currentProfile].find(m => m.id === editingMedId);
+      if (!med) return;
+
+      med.name = sanitize(document.getElementById("edit-fm-name").value.trim());
+      med.dosage = parseFloat(document.getElementById("edit-fm-dosage").value);
+      med.unit = document.getElementById("edit-fm-unit").value;
+      med.frequency = document.querySelector('input[name="edit-fm-frequency"]:checked').value;
+      
+      if (med.frequency === 'sos') {
+        med.timing = ["SOS"];
+      } else {
+        med.timing = Array.from(document.querySelectorAll('input[name="edit-fm-timing"]:checked')).map(cb => cb.value);
+        if (med.timing.length === 0) { showToast("Please select at least one time.", "warning"); return; }
+      }
+
+      saveDB(); closeEditModal(); showToast("Medicine updated successfully.", "success");
+    });
+
     async function handleOCR(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -675,7 +826,6 @@
       try {
         const result = await Tesseract.recognize(file, 'eng');
         const text = result.data.text.trim();
-        // Ignore lines that are pure numbers, short, or dates
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 4 && !/^\d+$/.test(l) && !l.includes('/'));
         if (lines.length > 0) {
           document.getElementById('fm-name').value = lines[0];
@@ -712,7 +862,6 @@
       
       if (!db[currentProfile]) db[currentProfile] = [];
       
-      // Smart Batch Grouping
       let existingMed = db[currentProfile].find(m => m.name.toLowerCase() === nameVal.toLowerCase() && !m.archived);
       
       if (existingMed) {
@@ -739,22 +888,47 @@
 
     // --- UTILITIES (PRINT/EXPORT/IMPORT) ---
     function printRefillList() {
-      let inventory = getCalculatedInventory().filter(m => m.daysLeft <= 14 && !m.archived);
-      if(inventory.length === 0) { showToast("No active medicines need refilling right now.", "success"); return; }
+      let daysInput = prompt("Print medicines exhausting within how many days? (Leave blank to print ALL active medicines)", "14");
+      if (daysInput === null) return; 
+      
+      let isPrintAll = daysInput.trim() === "";
+      let daysLimit = parseInt(daysInput);
+      
+      if (!isPrintAll && isNaN(daysLimit)) { showToast("Please enter a valid number of days.", "warning"); return; }
+
+      let inventory = getCalculatedInventory().filter(m => {
+        if (m.archived) return false;
+        if (isPrintAll) return true;
+        return m.daysLeft <= daysLimit;
+      });
+
+      if(inventory.length === 0) { showToast("No active medicines match this criteria.", "success"); return; }
 
       let printWin = window.open('', '_blank');
       let html = `<html><head><style>body{font-family:sans-serif;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:8px;} th{background:#eee;} .danger{color:red;font-weight:bold;}</style></head><body>
-      <h2>Refill List for ${currentProfile}</h2><table><tr><th>Medicine Name</th><th>Status</th><th>Expiring Batch</th></tr>`;
+      <h2>Refill List for ${currentProfile}</h2><table><tr><th>Medicine Name</th><th>Status</th><th>Batch & Pharmacy Details</th></tr>`;
+      
       inventory.forEach(m => {
-        html += `<tr><td><strong>${m.name}</strong></td><td class="${m.daysLeft<=3?'danger':''}">${m.daysLeft} days left</td><td>${m.batches[0]?m.batches[0].exp:'N/A'}</td></tr>`;
+        let batchesInfo = m.batches.map(b => {
+            let details = `Exp: ${b.exp}`;
+            if (b.batchNum) details += ` | ID: ${b.batchNum}`;
+            if (b.pharmacy) details += ` | Pharm: ${b.pharmacy}`;
+            return details;
+        }).join('<br>');
+        
+        html += `<tr><td><strong>${m.name}</strong></td><td class="${m.daysLeft<=3?'danger':''}">${m.daysLeft === Infinity ? 'SOS' : m.daysLeft + ' days left'}</td><td>${batchesInfo || 'N/A'}</td></tr>`;
       });
       html += `</table></body></html>`;
       printWin.document.write(html); printWin.document.close(); setTimeout(() => printWin.print(), 250);
     }
 
     function exportData() {
+      const timestamp = new Date().getTime();
+      const safeProfileName = currentProfile.replace(/\s+/g, '_').toLowerCase();
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db[currentProfile] || []));
-      const link = document.createElement('a'); link.href = dataStr; link.download = `medivault_${currentProfile}.json`;
+      const link = document.createElement('a'); 
+      link.href = dataStr; 
+      link.download = `medivault_${safeProfileName}_${timestamp}.json`;
       document.body.appendChild(link); link.click(); link.remove();
     }
 
@@ -770,16 +944,17 @@
       reader.readAsText(file); e.target.value = ''; 
     });
 
-    // Event Listeners
     document.getElementById('theme-toggle').addEventListener('click', () => {
       const el = document.documentElement; const next = el.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
       el.setAttribute('data-theme', next);
       document.getElementById('moon-icon').style.display = next === 'dark' ? 'none' : 'block';
       document.getElementById('sun-icon').style.display = next === 'dark' ? 'block' : 'none';
     });
+    
     document.getElementById("search-input").addEventListener("input", renderCards);
     document.getElementById("sort-dropdown").addEventListener("change", renderCards);
     document.getElementById("view-mode-dropdown").addEventListener("change", renderCards);
+    
     document.getElementById('toggle-password').addEventListener('click', function() {
       const passInput = document.getElementById('auth-password');
       if (passInput.type === 'password') { passInput.type = 'text'; this.innerText = '🙈'; } 
