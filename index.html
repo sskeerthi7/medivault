@@ -227,13 +227,12 @@
             <input type="email" id="auth-email" required>
           </div>
           <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="auth-password" required minlength="6">
-          </div>
-          <button type="submit" class="btn btn-primary" id="auth-submit-btn" style="width: 100%;">Sign In</button>
-        </form>
-        <div style="text-align: center; margin-top: 1rem;"><a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.85rem; color: var(--primary);">Forgot Password?</a></div>
-      </div>
+  <label>Password</label>
+  <div style="position: relative;">
+    <input type="password" id="auth-password" required minlength="6" style="padding-right: 40px;">
+    <button type="button" id="toggle-password" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-muted); padding: 0;">👁️</button>
+  </div>
+</div>
       <div id="logged-in-view" style="display: none; text-align: center;">
         <h3 style="margin-top:0;">Account Synced</h3>
         <p id="user-display-email" style="color: var(--text-muted); font-size: 0.95rem;"></p>
@@ -291,19 +290,19 @@
   <script>
     // --- FIREBASE CONFIGURATION (PASTE YOUR KEYS HERE) ---
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyCR1mOzBTRPX6Q3Dz2auqVU9zF5Pl3Uby4",
+  authDomain: "medivault-by-ssk.firebaseapp.com",
+  projectId: "medivault-by-ssk",
+  storageBucket: "medivault-by-ssk.firebasestorage.app",
+  messagingSenderId: "665121453834",
+  appId: "1:665121453834:web:dc77633ca9cec0683decf3"
     };
 
     let auth = null;
     let firestore = null;
     let currentUser = null;
 
-    if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    if (firebaseConfig.apiKey !== "AIzaSyCR1mOzBTRPX6Q3Dz2auqVU9zF5Pl3Uby4") {
       firebase.initializeApp(firebaseConfig);
       auth = firebase.auth();
       firestore = firebase.firestore();
@@ -580,6 +579,17 @@
     document.getElementById("search-input").addEventListener("input", renderCards);
     document.getElementById("sort-dropdown").addEventListener("change", renderCards);
     document.getElementById("view-mode-dropdown").addEventListener("change", renderCards);
+  document.getElementById('toggle-password').addEventListener('click', function() {
+  const passInput = document.getElementById('auth-password');
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    this.innerText = '🙈';
+  } else {
+    passInput.type = 'password';
+    this.innerText = '👁️';
+  }
+});
+  
   </script>
 </body>
 </html>
