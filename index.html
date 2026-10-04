@@ -5,10 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MediVault | Private Medicine Tracker</title>
   
-  <!-- Firebase Compatibility SDKs (Free Tier) -->
+  <!-- Firebase Compatibility SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Tesseract.js for Client-Side OCR -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
   <style>
     :root { 
@@ -52,8 +55,6 @@
     .tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .tab:hover:not(.active) { color: var(--text); }
     
-    .profile-action-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; padding: 0 2px; font-size: 0.85rem; transition: 0.2s;}
-    .profile-action-btn:hover { color: var(--primary); }
     .add-profile-btn { padding: 6px 12px; font-size: 0.85rem; font-weight: 600; background: transparent; border: 1px dashed var(--border); border-radius: 6px; color: var(--text-muted); cursor: pointer; white-space: nowrap;}
     .add-profile-btn:hover { border-color: var(--primary); color: var(--primary); }
 
@@ -79,11 +80,6 @@
     .routine-bar { display: flex; gap: 1rem; padding: 1rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap;}
     .routine-bar span { font-weight: 600; color: var(--text-muted); margin-right: auto;}
     
-    .logs-panel { margin-top: 2rem; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 1.5rem; display: none; box-shadow: 0 2px 8px var(--shadow);}
-    .logs-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-weight: 700; color: var(--text); font-size: 1.1rem;}
-    .log-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: var(--gray-bg); border-radius: 8px; margin-bottom: 0.5rem; font-size: 0.9rem; border: 1px solid var(--border); }
-    .log-undo-btn { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600;}
-
     .vault-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
     
     .med-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px var(--shadow); display: flex; flex-direction: column; transition: transform 0.2s;}
@@ -92,7 +88,6 @@
     
     .timing-badge { font-size: 0.8rem; background: rgba(37, 99, 235, 0.1); padding: 4px 8px; border-radius: 6px; color: var(--primary); font-weight: 600;}
     .timing-badge.sos { background: rgba(245, 158, 11, 0.1); color: var(--warning); }
-    .food-badge { font-size: 0.8rem; background: var(--gray-bg); padding: 4px 8px; border-radius: 6px; color: var(--text-muted); font-weight: 600; }
     
     .status-container { margin: 1rem 0; text-align: center; }
     .days-left { font-size: 2rem; font-weight: 800; color: var(--success); line-height: 1; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 0.5rem;}
@@ -106,7 +101,6 @@
     .sos-mode .days-left { color: var(--primary); }
     .archived-status { opacity: 0.6; filter: grayscale(1); }
 
-    .batch-item { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; padding: 8px 0; border-top: 1px solid var(--border); color: var(--text); }
     .card-actions { display: flex; gap: 8px; margin-top: auto; padding-top: 1rem; flex-wrap: wrap;}
     
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
@@ -118,7 +112,7 @@
     .auth-tab-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
     .form-group { margin-bottom: 1rem; text-align: left; }
-    .form-group label { display: block; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .form-group label { display: flex; align-items: center; font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
     .form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--bg); color: var(--text); box-sizing: border-box; font-family: inherit;}
     
     .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
@@ -148,22 +142,7 @@
     <div id="landing-view" style="text-align: center; padding: 4rem 1rem;">
       <h1 style="font-size: 3rem; margin-bottom: 0.5rem; color: var(--text);">Medi<span style="color: var(--primary);">Vault</span></h1>
       <p style="color: var(--text-muted); font-size: 1.2rem; margin-bottom: 2.5rem;">Your private, intelligent family medicine inventory tracker.</p>
-      <button class="btn btn-primary" onclick="openAuthModal()" style="font-size: 1.1rem; padding: 1rem 2.5rem; box-shadow: 0 4px 12px var(--shadow);">☁️ Sign In to Access Vault</button>
-      
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 4rem; text-align: left;">
-        <div style="background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px var(--shadow);">
-          <h3 style="margin-top: 0; color: var(--primary);">🔒 Secure Cloud Sync</h3>
-          <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Your data is encrypted and synced automatically across your devices. Never lose your inventory to a cleared browser cache.</p>
-        </div>
-        <div style="background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px var(--shadow);">
-          <h3 style="margin-top: 0; color: var(--primary);">📉 Smart Depletion Math</h3>
-          <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Stop guessing. MediVault calculates exactly how many days your stock will last and gives you calendar depletion dates.</p>
-        </div>
-        <div style="background: var(--surface); padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 6px var(--shadow);">
-          <h3 style="margin-top: 0; color: var(--primary);">👨‍👩‍👧‍👦 Family Profiles</h3>
-          <p style="color: var(--text-muted); font-size: 0.95rem; margin: 0;">Manage completely isolated vaults for different family members (e.g., Mom, Dad) under a single, easy-to-use dashboard.</p>
-        </div>
-      </div>
+      <button class="btn btn-primary" onclick="openAuthModal()" style="font-size: 1.1rem; padding: 1rem 2.5rem;">☁️ Sign In to Access Vault</button>
     </div>
 
     <!-- APP DASHBOARD -->
@@ -184,9 +163,6 @@
         
         <div class="action-group">
           <input type="file" id="import-file" style="display:none" accept=".json,application/json">
-          <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">↓ Import</button>
-          <button class="btn btn-outline" onclick="exportData()">↑ Export</button>
-          <button class="btn btn-outline" onclick="printRefillList()">🖨️ Print List</button>
           <button class="btn btn-primary" onclick="openAddModal()">+ Add Medicine</button>
         </div>
       </div>
@@ -196,17 +172,10 @@
         <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Morning'}], 'Logged Morning Routine')">🌅 Morning</button>
         <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Noon'}], 'Logged Noon Routine')">☀️ Noon</button>
         <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Night'}], 'Logged Night Routine')">🌙 Night</button>
+        <button class="btn btn-outline" onclick="executeDeduction([{timing: 'Weekly'}], 'Logged Weekly Routine')">📆 Weekly</button>
       </div>
 
       <div class="vault-grid" id="med-grid"></div>
-
-      <div class="logs-panel" id="logs-panel">
-        <div class="logs-header">
-          🕒 Recent Session Activity
-          <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">Quick-undo accidental logs</span>
-        </div>
-        <div id="logs-container" style="display: flex; flex-direction: column; gap: 8px;"></div>
-      </div>
     </div>
   </main>
 
@@ -214,16 +183,13 @@
   <div id="auth-modal" class="modal-overlay">
     <div class="modal-content">
       <span class="close-modal" onclick="closeAuthModal()">&times;</span>
-      
       <div id="logged-out-view">
         <div class="auth-tabs">
           <button class="auth-tab-btn active" id="tab-signin" onclick="switchAuthTab('signin')">Sign In</button>
           <button class="auth-tab-btn" id="tab-signup" onclick="switchAuthTab('signup')">Register</button>
         </div>
-        
         <button class="btn btn-google" onclick="handleGoogleSignIn()">Continue with Google</button>
         <div style="text-align: center; margin-bottom: 1rem; color: var(--text-muted); font-size: 0.85rem;">or continue with email</div>
-        
         <form id="auth-email-form" onsubmit="handleEmailAuth(event)">
           <div class="form-group">
             <label>Email Address</label>
@@ -238,12 +204,7 @@
           </div>
           <button type="submit" class="btn btn-primary" id="auth-submit-btn" style="width: 100%;">Sign In</button>
         </form>
-        
-        <div style="text-align: center; margin-top: 1rem;">
-          <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.85rem; color: var(--primary);">Forgot Password?</a>
-        </div>
       </div>
-      
       <div id="logged-in-view" style="display: none; text-align: center;">
         <h3 style="margin-top:0;">Account Synced</h3>
         <p id="user-display-email" style="color: var(--text-muted); font-size: 0.95rem;"></p>
@@ -259,20 +220,25 @@
       <h2 style="margin-top: 0;">Add to Vault</h2>
       <form id="add-med-form">
         <div class="form-group">
-          <label>Medicine Name *</label>
-          <input type="text" id="fm-name" required>
+          <label style="justify-content: space-between;">
+            Medicine Name * 
+            <button type="button" class="btn-outline" style="font-size:0.75rem; padding: 2px 8px; border-radius: 4px;" onclick="document.getElementById('ocr-input').click()">📷 Scan Label</button>
+          </label>
+          <input type="text" id="fm-name" required placeholder="Type or scan label">
+          <input type="file" id="ocr-input" accept="image/*" capture="environment" style="display:none;" onchange="handleOCR(event)">
         </div>
         <div style="display: flex; gap: 10px;">
           <div class="form-group" style="flex: 1;"><label>Amount per Dose *</label><input type="number" id="fm-dosage" required min="0.1" step="0.1" value="1"></div>
           <div class="form-group" style="flex: 1;">
             <label>Unit *</label>
-            <select id="fm-unit"><option value="tablet">Tablets</option><option value="capsule">Capsules</option><option value="ml">ml (Liquid)</option></select>
+            <select id="fm-unit"><option value="tablet">Tablets</option><option value="capsule">Capsules</option><option value="ml">ml</option></select>
           </div>
         </div>
         <div class="form-group">
           <label>Routine Schedule *</label>
           <div style="display: flex; gap: 1rem; margin-bottom: 0.8rem;">
-            <label><input type="radio" name="fm-routine-type" value="scheduled" checked> 🕒 Scheduled</label>
+            <label><input type="radio" name="fm-routine-type" value="scheduled" checked> 🕒 Daily</label>
+            <label><input type="radio" name="fm-routine-type" value="weekly"> 📆 Weekly</label>
             <label><input type="radio" name="fm-routine-type" value="sos"> 💊 SOS</label>
           </div>
           <div id="scheduled-timings-container" style="display: flex; gap: 1rem;">
@@ -281,14 +247,11 @@
             <label><input type="checkbox" name="fm-timing" value="Night"> Night</label>
           </div>
         </div>
-        <div class="form-group">
-          <label>Food Rule *</label>
-          <select id="fm-food"><option value="After Food">After Food</option><option value="Before Food">Before Food</option><option value="Independent">Independent</option></select>
-        </div>
         <div style="background: var(--gray-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
           <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>Total Qty *</label><input type="number" id="fm-qty" required min="0.1" step="0.1"></div>
-            <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>Expiry Date *</label><input type="date" id="fm-exp" required></div>
+            <!-- Expiry changed to Month/Year selection -->
+            <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>Expiry (MM/YY) *</label><input type="month" id="fm-exp" required></div>
           </div>
         </div>
         <button type="submit" class="btn btn-primary" style="width: 100%;">Save to Vault</button>
@@ -299,7 +262,7 @@
   <div class="toast-container" id="toast-container"></div>
 
   <script>
-    // --- FIREBASE CONFIGURATION (PASTE YOUR KEYS HERE) ---
+    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
       apiKey: "AIzaSyCR1mOzBTRPX6Q3Dz2auqVU9zF5Pl3Uby4",
       authDomain: "medivault-by-ssk.firebaseapp.com",
@@ -313,7 +276,7 @@
     let firestore = null;
     let currentUser = null;
 
-    if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+    if (firebaseConfig.apiKey) {
       firebase.initializeApp(firebaseConfig);
       auth = firebase.auth();
       firestore = firebase.firestore();
@@ -322,14 +285,19 @@
     let profileList = [];
     let currentProfile = "";
     let db = {};
-    let sessionLogs = [];
     let currentAuthMode = 'signin';
 
+    // Fix applied: Sanitize db to ensure no empty keys are sent to Firestore
     function saveDB() {
       if (currentUser && firestore) {
+        const safeVaults = {};
+        for (let key in db) {
+          if (key && key.trim() !== "") safeVaults[key] = db[key];
+        }
+        
         firestore.collection('users').doc(currentUser.uid).set({
-          profiles: profileList,
-          vaults: db,
+          profiles: profileList.filter(p => p && p.trim() !== ""),
+          vaults: safeVaults,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }).catch(err => console.error("Cloud sync error:", err));
       }
@@ -343,7 +311,7 @@
         const appView = document.getElementById('app-view');
 
         if (user) {
-          statusBtn.innerText = `👤 ${user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0]}`;
+          statusBtn.innerText = `👤 ${user.displayName || user.email.split('@')[0]}`;
           document.getElementById('logged-out-view').style.display = 'none';
           document.getElementById('logged-in-view').style.display = 'block';
           document.getElementById('user-display-email').innerText = user.email;
@@ -353,12 +321,13 @@
           firestore.collection('users').doc(user.uid).get().then(doc => {
             if (doc.exists) {
               const data = doc.data();
-              if (data.profiles) profileList = data.profiles;
+              if (data.profiles && data.profiles.length > 0) profileList = data.profiles;
               if (data.vaults) db = data.vaults;
-              currentProfile = profileList[0];
+              currentProfile = profileList[0] || "My Vault";
             } else {
               db = { "My Vault": [] }; 
               profileList = ["My Vault"];
+              currentProfile = "My Vault";
             }
             saveDB();
             renderTabs();
@@ -372,14 +341,15 @@
           appView.style.display = 'none';
           db = {};
           profileList = [];
+          currentProfile = "";
         }
       });
     }
 
+    // --- UI/AUTH LOGIC ---
     const authModal = document.getElementById('auth-modal');
     function openAuthModal() { authModal.style.display = 'flex'; }
     function closeAuthModal() { authModal.style.display = 'none'; }
-
     function switchAuthTab(mode) {
       currentAuthMode = mode;
       document.getElementById('tab-signin').classList.toggle('active', mode === 'signin');
@@ -388,17 +358,14 @@
     }
 
     function handleGoogleSignIn() {
-      if (!auth) { showToast("Add Firebase keys.", "warning"); return; }
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider).then(() => closeAuthModal()).catch(err => showToast(err.message, "warning"));
     }
 
     function handleEmailAuth(e) {
       e.preventDefault();
-      if (!auth) return;
       const email = document.getElementById('auth-email').value;
       const pass = document.getElementById('auth-password').value;
-
       if (currentAuthMode === 'signin') {
         auth.signInWithEmailAndPassword(email, pass).then(() => closeAuthModal()).catch(err => showToast(err.message, "warning"));
       } else {
@@ -408,10 +375,7 @@
         }).catch(err => showToast(err.message, "warning"));
       }
     }
-
-    function handleSignOut() {
-      if (auth) auth.signOut().then(() => closeAuthModal());
-    }
+    function handleSignOut() { auth.signOut().then(() => closeAuthModal()); }
 
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
@@ -422,6 +386,7 @@
       setTimeout(() => toast.remove(), 3000);
     }
 
+    // --- PROFILES ---
     function renderTabs() {
       const container = document.getElementById('profile-tabs-container');
       container.innerHTML = '';
@@ -431,14 +396,12 @@
       });
       if (profileList.length < 5) container.innerHTML += `<button class="add-profile-btn" onclick="addNewProfile()">+ Add Person</button>`;
     }
-
     function switchProfile(profileName) {
       currentProfile = profileName;
       if (!db[currentProfile]) db[currentProfile] = [];
       renderTabs();
       renderCards();
     }
-
     function addNewProfile() {
       const newName = prompt("Profile Name:");
       if (!newName || profileList.includes(newName)) return;
@@ -448,24 +411,35 @@
       switchProfile(newName);
     }
 
+    // --- FORM LOGIC ---
     document.querySelectorAll('input[name="fm-routine-type"]').forEach(radio => {
       radio.addEventListener('change', (e) => {
-        document.getElementById('scheduled-timings-container').style.display = e.target.value === 'sos' ? 'none' : 'flex';
+        document.getElementById('scheduled-timings-container').style.display = e.target.value === 'scheduled' ? 'flex' : 'none';
       });
     });
 
+    // --- INVENTORY CALCULATION ---
     function getCalculatedInventory() {
       let activeInventory = db[currentProfile] || [];
       activeInventory.forEach(med => {
         let totalQty = med.batches.reduce((sum, b) => sum + b.qty, 0);
         let isSOS = med.timing.includes("SOS");
+        let isWeekly = med.timing.includes("Weekly");
+        
         if (isSOS) {
           med.daysLeft = Infinity;
           med.dateStr = "N/A (SOS)";
         } else {
-          let intakeCount = med.timing.length || 1;
-          let daily = med.dosage * intakeCount;
-          med.daysLeft = daily > 0 ? Math.floor(totalQty / daily) : 0;
+          // Math adjusted for Weekly capsules logic
+          let dailyConsumption = 0;
+          if (isWeekly) {
+            dailyConsumption = med.dosage / 7;
+          } else {
+            let intakeCount = med.timing.length || 1;
+            dailyConsumption = med.dosage * intakeCount;
+          }
+          
+          med.daysLeft = dailyConsumption > 0 ? Math.floor(totalQty / dailyConsumption) : 0;
           let depletion = new Date();
           depletion.setDate(depletion.getDate() + med.daysLeft);
           med.dateStr = depletion.toISOString().split('T')[0];
@@ -474,39 +448,36 @@
       return activeInventory;
     }
 
+    // --- ICS CALENDAR EXPORT ---
+    function generateICS(name, timings) {
+      const start = new Date();
+      start.setHours(start.getHours() + 1);
+      const isoStart = start.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+      
+      const isWeekly = timings.includes('Weekly');
+      const rule = isWeekly ? 'FREQ=WEEKLY' : 'FREQ=DAILY';
+      
+      const icsStr = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:${isoStart}\nSUMMARY:Take ${name}\nDESCRIPTION:Time for your dose of ${name} (${timings.join(', ')}).\nRRULE:${rule}\nBEGIN:VALARM\nACTION:DISPLAY\nDESCRIPTION:Take ${name}\nTRIGGER:-PT15M\nEND:VALARM\nEND:VEVENT\nEND:VCALENDAR`;
+      
+      const blob = new Blob([icsStr], { type: 'text/calendar' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `MediVault_${name}_Reminder.ics`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast("Reminder file downloaded!", "success");
+    }
+
+    // --- CARD RENDERER ---
     function renderCards() {
       const grid = document.getElementById("med-grid");
-      const searchTerm = document.getElementById("search-input").value.toLowerCase();
-      const sortType = document.getElementById("sort-dropdown").value;
       const viewMode = document.getElementById("view-mode-dropdown").value;
       
       grid.innerHTML = "";
-      let inventory = getCalculatedInventory();
-      let filtered = inventory.filter(m => m.name.toLowerCase().includes(searchTerm) && (viewMode === "archived" ? m.archived : !m.archived));
+      let inventory = getCalculatedInventory().filter(m => viewMode === "archived" ? m.archived : !m.archived);
 
-      if (filtered.length === 0) {
-        if (searchTerm || viewMode === "archived") {
-          grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">No medicines found.</div>`;
-        } else {
-          grid.innerHTML = `
-            <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; background: var(--surface); border: 2px dashed var(--border); border-radius: 12px; margin-top: 1rem;">
-              <h3 style="margin-top: 0; font-size: 1.5rem;">Your Vault is Empty</h3>
-              <p style="color: var(--text-muted); margin-bottom: 2rem;">Follow these simple steps to start tracking:</p>
-              <div style="display: inline-flex; flex-direction: column; text-align: left; gap: 1rem; margin-bottom: 2.5rem;">
-                <div style="display: flex; align-items: center; gap: 12px;"><span style="background: var(--primary); color: white; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 0.9rem;">1</span> <span>Click <strong>+ Add Medicine</strong>.</span></div>
-                <div style="display: flex; align-items: center; gap: 12px;"><span style="background: var(--primary); color: white; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; font-size: 0.9rem;">2</span> <span>Enter your daily dosage plan.</span></div>
-              </div><br>
-              <button class="btn btn-primary" onclick="openAddModal()">+ Add Your First Medicine</button>
-            </div>`;
-        }
-        return;
-      }
-
-      if (sortType === "least") filtered.sort((a, b) => a.daysLeft - b.daysLeft);
-      if (sortType === "most") filtered.sort((a, b) => b.daysLeft - a.daysLeft);
-      if (sortType === "az") filtered.sort((a, b) => a.name.localeCompare(b.name));
-
-      filtered.forEach(med => {
+      inventory.forEach(med => {
         let isSOS = med.daysLeft === Infinity;
         let totalQty = med.batches.reduce((sum, b) => sum + b.qty, 0);
         let outOfStock = totalQty < med.dosage;
@@ -530,7 +501,8 @@
               <div class="progress-bar"><div class="progress-fill" style="width: ${percent}%; background-color: ${barColor};"></div></div>
             </div>
             <div class="card-actions">
-              <button class="btn btn-primary" style="flex:2;" onclick='executeDeduction([{"id": ${med.id}}], "Logged ${med.dosage} ${med.unit} of ${med.name}")' ${outOfStock ? 'disabled' : ''}>✓ Take ${med.dosage} ${med.unit}</button>
+              <button class="btn btn-primary" style="flex:4;" onclick='executeDeduction([{"id": ${med.id}}], "Logged ${med.dosage} ${med.unit} of ${med.name}")' ${outOfStock ? 'disabled' : ''}>✓ Take ${med.dosage} ${med.unit}</button>
+              <button class="btn btn-outline" style="flex:1;" title="Export Calendar Reminder" onclick='generateICS("${med.name}", ${JSON.stringify(med.timing)})'>📅</button>
             </div>
           </div>`;
       });
@@ -553,16 +525,43 @@
       saveDB(); renderCards(); showToast(message, "success");
     }
 
+    // --- ADD MEDICINE WITH OCR & MONTH VALIDATION ---
     const addModal = document.getElementById("add-modal");
-    function openAddModal() { document.getElementById('fm-exp').min = new Date().toISOString().split('T')[0]; addModal.style.display = "flex"; }
+    function openAddModal() { addModal.style.display = "flex"; }
     function closeAddModal() { addModal.style.display = "none"; document.getElementById("add-med-form").reset(); }
     
+    // OCR Logic
+    async function handleOCR(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      showToast("Scanning label with AI... please wait.", "warning");
+      try {
+        const result = await Tesseract.recognize(file, 'eng');
+        const lines = result.data.text.split('\n');
+        const medName = lines.find(line => line.trim().length > 3) || "Scanned Med";
+        document.getElementById('fm-name').value = medName.trim();
+        showToast("Scan complete!", "success");
+      } catch (err) {
+        showToast("Could not read text. Please type manually.", "danger");
+      }
+    }
+
     document.getElementById("add-med-form").addEventListener("submit", (e) => {
       e.preventDefault();
-      const isSOS = document.querySelector('input[name="fm-routine-type"]:checked').value === 'sos';
-      const timings = isSOS ? ["SOS"] : Array.from(document.querySelectorAll('input[name="fm-timing"]:checked')).map(cb => cb.value);
+      const routineType = document.querySelector('input[name="fm-routine-type"]:checked').value;
       
-      const newBatch = { qty: parseFloat(document.getElementById("fm-qty").value), exp: document.getElementById("fm-exp").value };
+      let timings = [];
+      if (routineType === 'sos') timings = ["SOS"];
+      else if (routineType === 'weekly') timings = ["Weekly"];
+      else timings = Array.from(document.querySelectorAll('input[name="fm-timing"]:checked')).map(cb => cb.value);
+      
+      // Calculate Expiry to end of selected month
+      const expInput = document.getElementById("fm-exp").value; // Format: YYYY-MM
+      const expDate = new Date(expInput + "-01");
+      expDate.setMonth(expDate.getMonth() + 1);
+      expDate.setDate(0); 
+
+      const newBatch = { qty: parseFloat(document.getElementById("fm-qty").value), exp: expDate.toISOString().split('T')[0] };
       
       if (!db[currentProfile]) db[currentProfile] = [];
       db[currentProfile].push({
@@ -571,7 +570,6 @@
         dosage: parseFloat(document.getElementById("fm-dosage").value),
         unit: document.getElementById("fm-unit").value,
         timing: timings,
-        food: document.getElementById("fm-food").value,
         archived: false,
         batches: [newBatch]
       });
@@ -587,22 +585,13 @@
       document.getElementById('sun-icon').style.display = next === 'dark' ? 'block' : 'none';
     });
 
-    document.getElementById("search-input").addEventListener("input", renderCards);
-    document.getElementById("sort-dropdown").addEventListener("change", renderCards);
     document.getElementById("view-mode-dropdown").addEventListener("change", renderCards);
     
-    // --- PASSWORD TOGGLE LOGIC ---
     document.getElementById('toggle-password').addEventListener('click', function() {
       const passInput = document.getElementById('auth-password');
-      if (passInput.type === 'password') {
-        passInput.type = 'text';
-        this.innerText = '🙈';
-      } else {
-        passInput.type = 'password';
-        this.innerText = '👁️';
-      }
+      if (passInput.type === 'password') { passInput.type = 'text'; this.innerText = '🙈'; } 
+      else { passInput.type = 'password'; this.innerText = '👁️'; }
     });
-  
   </script>
 </body>
 </html>
