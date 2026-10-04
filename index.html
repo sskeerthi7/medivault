@@ -129,7 +129,7 @@
     <a href="#" class="logo">Medi<span>Vault</span></a>
     <div class="header-center"><div class="profile-tabs" id="profile-tabs-container"></div></div>
     <div class="header-right">
-      <button class="btn btn-outline" id="auth-status-btn" onclick="openAuthModal()">☁️ Sign In</button>
+      <button class="btn btn-outline" id="auth-status-btn" onclick="openAuthModal()">☁️️ Sign In</button>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle Dark Mode">
         <svg id="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
         <svg id="sun-icon" style="display: none;" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
@@ -162,7 +162,6 @@
         </div>
         
         <div class="action-group">
-          <input type="file" id="import-file" style="display:none" accept=".json,application/json">
           <button class="btn btn-primary" onclick="openAddModal()">+ Add Medicine</button>
         </div>
       </div>
@@ -204,6 +203,9 @@
           </div>
           <button type="submit" class="btn btn-primary" id="auth-submit-btn" style="width: 100%;">Sign In</button>
         </form>
+        <div style="text-align: center; margin-top: 1rem;">
+          <a href="#" onclick="handleForgotPassword(event)" style="font-size: 0.85rem; color: var(--primary);">Forgot Password?</a>
+        </div>
       </div>
       <div id="logged-in-view" style="display: none; text-align: center;">
         <h3 style="margin-top:0;">Account Synced</h3>
@@ -250,7 +252,6 @@
         <div style="background: var(--gray-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem;">
           <div style="display: flex; gap: 10px; margin-bottom: 10px;">
             <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>Total Qty *</label><input type="number" id="fm-qty" required min="0.1" step="0.1"></div>
-            <!-- Expiry changed to Month/Year selection -->
             <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>Expiry (MM/YY) *</label><input type="month" id="fm-exp" required></div>
           </div>
         </div>
@@ -264,7 +265,7 @@
   <script>
     // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
-      apiKey: "AIzaSyCR1mOzBTRPX6Q3Dz2auqVU9zF5Pl3Uby4",
+      apiKey: "YOUR_API_KEY",
       authDomain: "medivault-by-ssk.firebaseapp.com",
       projectId: "medivault-by-ssk",
       storageBucket: "medivault-by-ssk.firebasestorage.app",
@@ -276,18 +277,34 @@
     let firestore = null;
     let currentUser = null;
 
-    if (firebaseConfig.apiKey) {
+    if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
       firebase.initializeApp(firebaseConfig);
       auth = firebase.auth();
       firestore = firebase.firestore();
     }
 
-    let profileList = [];
-    let currentProfile = "";
-    let db = {};
+    let profileList = ["My Vault"];
+    let currentProfile = "My Vault";
+    let db = { "My Vault": [] };
     let currentAuthMode = 'signin';
 
-    // Fix applied: Sanitize db to ensure no empty keys are sent to Firestore
+    function getFriendlyError(errorCode) {
+      switch (errorCode) {
+        case 'auth/invalid-credential':
+        case 'auth/wrong-password':
+        case 'auth/user-not-found':
+          return "Incorrect email or password.";
+        case 'auth/email-already-in-use':
+          return "This email is already registered.";
+        case 'auth/weak-password':
+          return "Password should be at least 6 characters.";
+        case 'auth/invalid-email':
+          return "Please enter a valid email address.";
+        default:
+          return "Authentication failed. Please try again.";
+      }
+    }
+
     function saveDB() {
       if (currentUser && firestore) {
         const safeVaults = {};
@@ -299,7 +316,7 @@
           profiles: profileList.filter(p => p && p.trim() !== ""),
           vaults: safeVaults,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(err => console.error("Cloud sync error:", err));
+        }, { merge: true }).catch(err => console.error("Cloud sync error:", err));
       }
     }
 
@@ -322,14 +339,21 @@
             if (doc.exists) {
               const data = doc.data();
               if (data.profiles && data.profiles.length > 0) profileList = data.profiles;
-              if (data.vaults) db = data.vaults;
+              if (data.vaults && Object.keys(data.vaults).length > 0) db = data.vaults;
               currentProfile = profileList[0] || "My Vault";
             } else {
               db = { "My Vault": [] }; 
               profileList = ["My Vault"];
               currentProfile = "My Vault";
+              saveDB();
             }
-            saveDB();
+            renderTabs();
+            renderCards();
+          }).catch(err => {
+            console.error("Cloud pull error:", err);
+            db = { "My Vault": [] };
+            profileList = ["My Vault"];
+            currentProfile = "My Vault";
             renderTabs();
             renderCards();
           });
@@ -350,6 +374,7 @@
     const authModal = document.getElementById('auth-modal');
     function openAuthModal() { authModal.style.display = 'flex'; }
     function closeAuthModal() { authModal.style.display = 'none'; }
+    
     function switchAuthTab(mode) {
       currentAuthMode = mode;
       document.getElementById('tab-signin').classList.toggle('active', mode === 'signin');
@@ -358,24 +383,43 @@
     }
 
     function handleGoogleSignIn() {
+      if (!auth) { showToast("Please configure Firebase keys.", "warning"); return; }
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).then(() => closeAuthModal()).catch(err => showToast(err.message, "warning"));
+      auth.signInWithPopup(provider).then(() => closeAuthModal()).catch(err => showToast(getFriendlyError(err.code), "warning"));
     }
 
     function handleEmailAuth(e) {
       e.preventDefault();
+      if (!auth) { showToast("Please configure Firebase keys.", "warning"); return; }
       const email = document.getElementById('auth-email').value;
       const pass = document.getElementById('auth-password').value;
+
       if (currentAuthMode === 'signin') {
-        auth.signInWithEmailAndPassword(email, pass).then(() => closeAuthModal()).catch(err => showToast(err.message, "warning"));
+        auth.signInWithEmailAndPassword(email, pass).then(() => closeAuthModal()).catch(err => showToast(getFriendlyError(err.code), "warning"));
       } else {
         auth.createUserWithEmailAndPassword(email, pass).then(() => {
-          showToast("Account created!", "success");
+          showToast("Account created successfully!", "success");
           closeAuthModal();
-        }).catch(err => showToast(err.message, "warning"));
+        }).catch(err => showToast(getFriendlyError(err.code), "warning"));
       }
     }
-    function handleSignOut() { auth.signOut().then(() => closeAuthModal()); }
+
+    function handleForgotPassword(e) {
+      e.preventDefault();
+      if (!auth) { showToast("Please configure Firebase keys.", "warning"); return; }
+      const email = document.getElementById('auth-email').value;
+      if (!email) {
+        showToast("Please enter your email address first.", "warning");
+        return;
+      }
+      auth.sendPasswordResetEmail(email)
+        .then(() => showToast("Password reset email sent! Check your inbox.", "success"))
+        .catch(err => showToast(getFriendlyError(err.code), "warning"));
+    }
+
+    function handleSignOut() {
+      if (auth) auth.signOut().then(() => closeAuthModal());
+    }
 
     function showToast(message, type = 'success') {
       const container = document.getElementById('toast-container');
@@ -396,19 +440,22 @@
       });
       if (profileList.length < 5) container.innerHTML += `<button class="add-profile-btn" onclick="addNewProfile()">+ Add Person</button>`;
     }
+
     function switchProfile(profileName) {
       currentProfile = profileName;
       if (!db[currentProfile]) db[currentProfile] = [];
       renderTabs();
       renderCards();
     }
+
     function addNewProfile() {
       const newName = prompt("Profile Name:");
-      if (!newName || profileList.includes(newName)) return;
-      profileList.push(newName);
-      db[newName] = [];
+      if (!newName || !newName.trim() || profileList.includes(newName.trim())) return;
+      const cleanName = newName.trim();
+      profileList.push(cleanName);
+      db[cleanName] = [];
       saveDB();
-      switchProfile(newName);
+      switchProfile(cleanName);
     }
 
     // --- FORM LOGIC ---
@@ -430,7 +477,6 @@
           med.daysLeft = Infinity;
           med.dateStr = "N/A (SOS)";
         } else {
-          // Math adjusted for Weekly capsules logic
           let dailyConsumption = 0;
           if (isWeekly) {
             dailyConsumption = med.dosage / 7;
@@ -473,9 +519,15 @@
     function renderCards() {
       const grid = document.getElementById("med-grid");
       const viewMode = document.getElementById("view-mode-dropdown").value;
+      const searchTerm = document.getElementById("search-input").value.toLowerCase();
+      const sortType = document.getElementById("sort-dropdown").value;
       
       grid.innerHTML = "";
-      let inventory = getCalculatedInventory().filter(m => viewMode === "archived" ? m.archived : !m.archived);
+      let inventory = getCalculatedInventory().filter(m => (viewMode === "archived" ? m.archived : !m.archived) && m.name.toLowerCase().includes(searchTerm));
+
+      if (sortType === "least") inventory.sort((a, b) => a.daysLeft - b.daysLeft);
+      if (sortType === "most") inventory.sort((a, b) => b.daysLeft - a.daysLeft);
+      if (sortType === "az") inventory.sort((a, b) => a.name.localeCompare(b.name));
 
       inventory.forEach(med => {
         let isSOS = med.daysLeft === Infinity;
@@ -530,19 +582,22 @@
     function openAddModal() { addModal.style.display = "flex"; }
     function closeAddModal() { addModal.style.display = "none"; document.getElementById("add-med-form").reset(); }
     
-    // OCR Logic
     async function handleOCR(e) {
       const file = e.target.files[0];
       if (!file) return;
-      showToast("Scanning label with AI... please wait.", "warning");
+      showToast("Scanning label with AI... please wait.", "success");
       try {
         const result = await Tesseract.recognize(file, 'eng');
-        const lines = result.data.text.split('\n');
-        const medName = lines.find(line => line.trim().length > 3) || "Scanned Med";
-        document.getElementById('fm-name').value = medName.trim();
-        showToast("Scan complete!", "success");
+        const text = result.data.text.trim();
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3 && !/^\d+$/.test(l));
+        if (lines.length > 0) {
+          document.getElementById('fm-name').value = lines[0];
+          showToast("Scan complete!", "success");
+        } else {
+          showToast("Could not read clearly. Please type name.", "warning");
+        }
       } catch (err) {
-        showToast("Could not read text. Please type manually.", "danger");
+        showToast("OCR processing failed. Please type manually.", "danger");
       }
     }
 
@@ -555,8 +610,7 @@
       else if (routineType === 'weekly') timings = ["Weekly"];
       else timings = Array.from(document.querySelectorAll('input[name="fm-timing"]:checked')).map(cb => cb.value);
       
-      // Calculate Expiry to end of selected month
-      const expInput = document.getElementById("fm-exp").value; // Format: YYYY-MM
+      const expInput = document.getElementById("fm-exp").value; 
       const expDate = new Date(expInput + "-01");
       expDate.setMonth(expDate.getMonth() + 1);
       expDate.setDate(0); 
@@ -585,6 +639,8 @@
       document.getElementById('sun-icon').style.display = next === 'dark' ? 'block' : 'none';
     });
 
+    document.getElementById("search-input").addEventListener("input", renderCards);
+    document.getElementById("sort-dropdown").addEventListener("change", renderCards);
     document.getElementById("view-mode-dropdown").addEventListener("change", renderCards);
     
     document.getElementById('toggle-password').addEventListener('click', function() {
